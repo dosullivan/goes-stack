@@ -48,7 +48,12 @@ Lightweight Go API server that provides RESTful endpoints for accessing satellit
 ### 🐳 goesproc-docker
 Containerized goesproc setup for processing raw GOES satellite data from TCP streams.
 
-**Purpose:** Receives TCP stream from satdump/goesrecv and processes it into viewable images.
+**Features:**
+- Processes raw GOES data from satdump/goesrecv TCP streams
+- Automatic image upload to MinIO every 15 minutes via sidecar container
+- Local cleanup of successfully uploaded files
+- Comprehensive logging and error handling
+- Environment-based configuration
 
 ## Quick Start
 
@@ -73,18 +78,21 @@ satdump live goes_hrit_tcp GOES_18 \
   --tcp_port 5004
 ```
 
-Alternatively, use goesrecv for GOES-16:
-```bash
-goesrecv -c goesrecv.conf
-```
-
-### 3. Start goesproc Processing
+### 3. Start goesproc Processing with Auto-Upload
 
 ```bash
 cd goesproc-docker
-# Edit docker-compose.yml to point to your Pi's IP
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your MinIO endpoint and credentials
+# Update docker-compose.yml to point to your Pi's IP for TCP stream
 docker-compose up -d
 ```
+
+The uploader sidecar will automatically:
+- Upload processed images to MinIO every 15 minutes
+- Clean up local files after successful upload
+- Log all operations to `./logs/upload.log`
 
 ### 4. Start the API Server
 
@@ -120,14 +128,25 @@ PORT=3010
 ```
 
 **goesproc-docker:**
-- Edit `config/goesproc.conf` to configure your processing pipeline
-- Update `docker-compose.yml` to point to your satdump/goesrecv TCP stream
+```bash
+MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+BUCKET_NAME=goes-19
+UPLOAD_INTERVAL=900  # 15 minutes
+```
 
 ### MinIO Setup
 
 1. Access MinIO console at `http://localhost:9001`
 2. Create a bucket named `goes-19` etc
 3. Configure appropriate access policies
+
+### goesproc Configuration
+
+- Edit `config/goesproc.conf` to configure your processing pipeline
+- Update `docker-compose.yml` to point to your satdump/goesrecv TCP stream
+- Monitor upload logs: `docker-compose logs -f uploader`
 
 ## Development
 
@@ -161,6 +180,18 @@ cd goes-viewer && docker build -t goes-viewer . && docker run -p 3000:3000 goes-
 # Processing
 cd goesproc-docker && docker-compose up -d
 ```
+
+## Troubleshooting
+
+### Upload Issues
+- Check MinIO connectivity: `docker-compose exec uploader mc ls minio/`
+- View upload logs: `docker-compose logs -f uploader`
+- Verify bucket permissions in MinIO console
+
+### Processing Issues
+- Check TCP connection to Raspberry Pi
+- Verify goesproc configuration file
+- Monitor processing logs: `docker-compose logs -f goesproc`
 
 ## Contributing
 

@@ -6,13 +6,40 @@ services:
     image: goesproc:latest
     container_name: goesproc
     volumes:
-      # Mount local directories for input data and output images
       - ./data:/data
       - ./config:/config
       - ./output:/output
     working_dir: /data
-    # Override default command - customize as needed
-    command: ["goesproc", "--config", "/config/goesproc.conf", "--mode", "lrit", "/output"]
-    # Uncomment to run interactively
-    # stdin_open: true
-    # tty: true
+    command: ["goesproc", "-c", "/config/goesproc.conf", "-m", "packet", "--subscribe", "tcp://10.0.5.104:5004"]
+    restart: unless-stopped
+
+  uploader:
+    build:
+      context: .
+      dockerfile: Dockerfile.uploader
+    container_name: goesproc-uploader
+    volumes:
+      - ./output:/output:ro  # Read-only access to goesproc output
+      - ./scripts:/scripts:ro
+      - ./logs:/logs  # For upload logs
+    environment:
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - BUCKET_NAME=${BUCKET_NAME:-goes-19}
+      - UPLOAD_INTERVAL=${UPLOAD_INTERVAL:-900}  # 15 minutes in seconds
+    depends_on:
+      - goesproc
+    restart: unless-stopped
+    command: |
+      sh -c "
+        echo 'Configuring MinIO client...' &&
+        mc alias set minio http://\$${MINIO_ENDPOINT} \$${MINIO_ACCESS_KEY} \$${MINIO_SECRET_KEY} &&
+        echo 'Starting upload loop...' &&
+        while true; do
+          echo \"\$(date): Starting upload cycle\" >> /logs/upload.log
+          /scripts/upload.sh >> /logs/upload.log 2>&1
+          echo \"\$(date): Upload cycle completed, sleeping for \$${UPLOAD_INTERVAL} seconds\" >> /logs/upload.log
+          sleep \$${UPLOAD_INTERVAL}
+        done
+      "

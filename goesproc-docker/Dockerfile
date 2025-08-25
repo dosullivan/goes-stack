@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 
 # Clone and build goestools
 WORKDIR /usr/src
-RUN git clone https://github.com/pietern/goestools.git
+RUN git clone --recursive https://github.com/pietern/goestools.git
 WORKDIR /usr/src/goestools
 RUN mkdir -p build
 WORKDIR /usr/src/goestools/build
