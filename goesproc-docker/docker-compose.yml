@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  goesproc:
+    build: .
+    image: goesproc:latest
+    container_name: goesproc
+    volumes:
+      # Mount local directories for input data and output images
+      - ./data:/data
+      - ./config:/config
+      - ./output:/output
+    working_dir: /data
+    # Override default command - customize as needed
+    command: ["goesproc", "--config", "/config/goesproc.conf", "--mode", "lrit", "/output"]
+    # Uncomment to run interactively
+    # stdin_open: true
+    # tty: true
