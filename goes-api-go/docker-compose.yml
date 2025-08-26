@@ -1,0 +1,22 @@
+services:
+  goes-api:
+    image: ghcr.io/dosullivan/goes-api:latest # use goes-api:latest for local dev in your override file and the build: section
+    #ports:
+    #  - "3000:3000"
+    environment:
+      - S3_ENDPOINT=localhost:9000
+      - BUCKET_NAME=goes-19
+      - ACCESS_KEY_ID=example
+      - SECRET_ACCESS_KEY=example
+      - USE_SSL_FOR_S3=true
+    restart: always  # Ensure the service restarts on failure or on system reboot
+    volumes:
+      - /usr/share/zoneinfo:/usr/share/zoneinfo:ro
+
+# note: use a docker-compose.override.yml file to override the settings in this file
+# simply copy the file and adjust the settings as needed
+# use a build: section to build the image locally like this:
+#    image: goes-api:latest
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
