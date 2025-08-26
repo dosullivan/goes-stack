@@ -19,14 +19,14 @@ services:
       dockerfile: Dockerfile.uploader
     container_name: goesproc-uploader
     volumes:
-      - ./data/goes19:/output:ro  # Read-only access to goesproc goes19 output
+      - ./data:/data:ro  # Read-only access to all goesproc data
       - ./scripts:/scripts:ro
       - ./logs:/logs  # For upload logs
     environment:
       - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9000}
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
-      - BUCKET_NAME=${BUCKET_NAME:-goes-19}
+      - BUCKET_NAME=${BUCKET_NAME:-goes-data}
       - UPLOAD_INTERVAL=${UPLOAD_INTERVAL:-900}  # 15 minutes in seconds
     depends_on:
       - goesproc
@@ -40,35 +40,6 @@ services:
           echo \"\$(date): Starting upload cycle\" >> /logs/upload.log
           /scripts/upload.sh >> /logs/upload.log 2>&1
           echo \"\$(date): Upload cycle completed, sleeping for \$${UPLOAD_INTERVAL} seconds\" >> /logs/upload.log
-          sleep \$${UPLOAD_INTERVAL}
-        done
-      "
-
-  emwin-uploader:
-    build:
-      context: .
-      dockerfile: Dockerfile.uploader
-    container_name: goesproc-emwin-uploader
-    volumes:
-      - ./data/emwin:/emwin:ro  # Read-only access to emwin data
-      - ./scripts:/scripts:ro
-      - ./logs:/logs  # For upload logs
-    environment:
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9000}
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
-      - EMWIN_BUCKET_NAME=${EMWIN_BUCKET_NAME:-goes-19-emwin}
-      - UPLOAD_INTERVAL=${EMWIN_UPLOAD_INTERVAL:-900}  # 15 minutes in seconds
-    restart: unless-stopped
-    command: |
-      sh -c "
-        echo 'Configuring MinIO client for EMWIN...' &&
-        mc alias set minio http://\$${MINIO_ENDPOINT} \$${MINIO_ACCESS_KEY} \$${MINIO_SECRET_KEY} &&
-        echo 'Starting EMWIN upload loop...' &&
-        while true; do
-          echo \"\$(date): Starting EMWIN upload cycle\" >> /logs/emwin-upload.log
-          /scripts/upload-emwin.sh >> /logs/emwin-upload.log 2>&1
-          echo \"\$(date): EMWIN upload cycle completed, sleeping for \$${UPLOAD_INTERVAL} seconds\" >> /logs/emwin-upload.log
           sleep \$${UPLOAD_INTERVAL}
         done
       "

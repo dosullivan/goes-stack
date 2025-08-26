@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# GOES Image Upload Script for MinIO
-# This script syncs processed GOES images to MinIO and cleans up local files
+# GOES Data Upload Script for MinIO
+# This script syncs all processed satellite data to MinIO and cleans up local files
+# Preserves directory structure: goes19/, goes18/, himawari8/, emwin/, nws/
 
 set -euo pipefail
 
@@ -9,8 +10,8 @@ set -euo pipefail
 MINIO_ENDPOINT=${MINIO_ENDPOINT:-localhost:9000}
 MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
 MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
-BUCKET_NAME=${BUCKET_NAME:-goes-19}
-SOURCE_DIR="/output"
+BUCKET_NAME=${BUCKET_NAME:-goes-data}
+SOURCE_DIR="/data"
 LOG_PREFIX="[$(date '+%Y-%m-%d %H:%M:%S')]"
 
 echo "$LOG_PREFIX Starting upload process..."
@@ -28,9 +29,9 @@ if ! mc ls "minio/$BUCKET_NAME" > /dev/null 2>&1; then
     mc anonymous set public "minio/$BUCKET_NAME"
 fi
 
-# Count files before upload
-file_count=$(find "$SOURCE_DIR" -type f -name "*.jpg" -o -name "*.png" -o -name "*.gif" | wc -l)
-echo "$LOG_PREFIX Found $file_count image files to process"
+# Count files before upload (including all data types)
+file_count=$(find "$SOURCE_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.gif" -o -name "*.txt" -o -name "*.TXT" -o -name "*.nc" \) | wc -l)
+echo "$LOG_PREFIX Found $file_count data files to process"
 
 if [ "$file_count" -eq 0 ]; then
     echo "$LOG_PREFIX No files to upload"
@@ -64,7 +65,7 @@ echo "$LOG_PREFIX Cleaning up empty directories..."
 find "$SOURCE_DIR" -type d -empty -delete 2>/dev/null || true
 
 # Get final counts
-remaining_files=$(find "$SOURCE_DIR" -type f -name "*.jpg" -o -name "*.png" -o -name "*.gif" | wc -l)
+remaining_files=$(find "$SOURCE_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.gif" -o -name "*.txt" -o -name "*.TXT" -o -name "*.nc" \) | wc -l)
 bucket_files=$(mc ls "minio/$BUCKET_NAME/" --recursive | wc -l)
 
 echo "$LOG_PREFIX Upload completed successfully"

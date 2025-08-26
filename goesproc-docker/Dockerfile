@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     git \
     libopencv-dev \
     zlib1g-dev \
+    libproj-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build goestools
