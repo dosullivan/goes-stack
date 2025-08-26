@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
 	"sort"
 	"strings"
@@ -39,21 +39,48 @@ type ProductPath struct {
 func GetWeatherProducts(s3Client *s3.S3Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		products := []WeatherProduct{
-			// ABI Full Disk Products
-			{Key: "fd_color", Title: "GOES-19 Full Disk Color", Description: "False color composite imagery", Icon: "globe-americas", Category: "abi"},
-			{Key: "fd_ch02", Title: "Channel 2 (Red)", Description: "Visible red channel", Category: "abi"},
-			{Key: "fd_ch07", Title: "Channel 7 (Shortwave IR)", Description: "Shortwave infrared", Category: "abi"},
-			{Key: "fd_ch07_enhanced", Title: "Channel 7 Enhanced", Description: "Enhanced shortwave infrared", Category: "abi"},
-			{Key: "fd_ch08", Title: "Channel 8 (Upper Troposphere)", Description: "Upper tropospheric water vapor", Category: "abi"},
-			{Key: "fd_ch08_enhanced", Title: "Channel 8 Enhanced", Description: "Enhanced upper troposphere", Category: "abi"},
-			{Key: "fd_ch09", Title: "Channel 9 (Mid Troposphere)", Description: "Mid-level water vapor", Category: "abi"},
-			{Key: "fd_ch09_enhanced", Title: "Channel 9 Enhanced", Description: "Enhanced mid troposphere", Category: "abi"},
-			{Key: "fd_ch13", Title: "Channel 13 (Clean Longwave IR)", Description: "Clean longwave infrared", Category: "abi"},
-			{Key: "fd_ch13_enhanced", Title: "Channel 13 Enhanced", Description: "Enhanced clean longwave IR", Category: "abi"},
-			{Key: "fd_ch14", Title: "Channel 14 (Longwave IR)", Description: "Standard longwave infrared", Category: "abi"},
-			{Key: "fd_ch14_enhanced", Title: "Channel 14 Enhanced", Description: "Enhanced longwave IR", Category: "abi"},
-			{Key: "fd_ch15", Title: "Channel 15 (Dirty Longwave IR)", Description: "Dirty longwave infrared", Category: "abi"},
-			{Key: "fd_ch15_enhanced", Title: "Channel 15 Enhanced", Description: "Enhanced dirty longwave IR", Category: "abi"},
+			// GOES-18 Full Disk Products
+			{Key: "goes18_fd_ch13", Title: "GOES-18 Channel 13", Description: "Clean longwave infrared", Category: "goes18"},
+			{Key: "goes18_fd_ch13_enhanced", Title: "GOES-18 Channel 13 Enhanced", Description: "Enhanced clean longwave IR", Category: "goes18"},
+			
+			// GOES-19 Full Disk Products
+			{Key: "fd_color", Title: "GOES-19 Full Disk Color", Description: "False color composite imagery", Icon: "globe-americas", Category: "goes19_fd"},
+			{Key: "fd_ch02", Title: "Channel 2 (Red)", Description: "Visible red channel", Category: "goes19_fd"},
+			{Key: "fd_ch07", Title: "Channel 7 (Shortwave IR)", Description: "Shortwave infrared", Category: "goes19_fd"},
+			{Key: "fd_ch07_enhanced", Title: "Channel 7 Enhanced", Description: "Enhanced shortwave infrared", Category: "goes19_fd"},
+			{Key: "fd_ch08", Title: "Channel 8 (Upper Troposphere)", Description: "Upper tropospheric water vapor", Category: "goes19_fd"},
+			{Key: "fd_ch08_enhanced", Title: "Channel 8 Enhanced", Description: "Enhanced upper troposphere", Category: "goes19_fd"},
+			{Key: "fd_ch09", Title: "Channel 9 (Mid Troposphere)", Description: "Mid-level water vapor", Category: "goes19_fd"},
+			{Key: "fd_ch09_enhanced", Title: "Channel 9 Enhanced", Description: "Enhanced mid troposphere", Category: "goes19_fd"},
+			{Key: "fd_ch13", Title: "Channel 13 (Clean Longwave IR)", Description: "Clean longwave infrared", Category: "goes19_fd"},
+			{Key: "fd_ch13_enhanced", Title: "Channel 13 Enhanced", Description: "Enhanced clean longwave IR", Category: "goes19_fd"},
+			{Key: "fd_ch14", Title: "Channel 14 (Longwave IR)", Description: "Standard longwave infrared", Category: "goes19_fd"},
+			{Key: "fd_ch14_enhanced", Title: "Channel 14 Enhanced", Description: "Enhanced longwave IR", Category: "goes19_fd"},
+			{Key: "fd_ch15", Title: "Channel 15 (Dirty Longwave IR)", Description: "Dirty longwave infrared", Category: "goes19_fd"},
+			{Key: "fd_ch15_enhanced", Title: "Channel 15 Enhanced", Description: "Enhanced dirty longwave IR", Category: "goes19_fd"},
+
+			// GOES-19 Mesoscale 1 Products
+			{Key: "m1_color", Title: "Mesoscale 1 Color", Description: "False color composite", Category: "goes19_m1"},
+			{Key: "m1_ch02", Title: "Mesoscale 1 Channel 2", Description: "Visible red channel", Category: "goes19_m1"},
+			{Key: "m1_ch07", Title: "Mesoscale 1 Channel 7", Description: "Shortwave infrared", Category: "goes19_m1"},
+			{Key: "m1_ch07_enhanced", Title: "Mesoscale 1 Ch7 Enhanced", Description: "Enhanced shortwave IR", Category: "goes19_m1"},
+			{Key: "m1_ch13", Title: "Mesoscale 1 Channel 13", Description: "Clean longwave IR", Category: "goes19_m1"},
+			{Key: "m1_ch13_enhanced", Title: "Mesoscale 1 Ch13 Enhanced", Description: "Enhanced clean IR", Category: "goes19_m1"},
+
+			// GOES-19 Mesoscale 2 Products
+			{Key: "m2_color", Title: "Mesoscale 2 Color", Description: "False color composite", Category: "goes19_m2"},
+			{Key: "m2_ch02", Title: "Mesoscale 2 Channel 2", Description: "Visible red channel", Category: "goes19_m2"},
+			{Key: "m2_ch07", Title: "Mesoscale 2 Channel 7", Description: "Shortwave infrared", Category: "goes19_m2"},
+			{Key: "m2_ch07_enhanced", Title: "Mesoscale 2 Ch7 Enhanced", Description: "Enhanced shortwave IR", Category: "goes19_m2"},
+			{Key: "m2_ch13", Title: "Mesoscale 2 Channel 13", Description: "Clean longwave IR", Category: "goes19_m2"},
+			{Key: "m2_ch13_enhanced", Title: "Mesoscale 2 Ch13 Enhanced", Description: "Enhanced clean IR", Category: "goes19_m2"},
+
+			// GOES-19 Non-CMIP Products
+			{Key: "non_cmip_acha", Title: "Cloud Top Height", Description: "ABI Cloud Height Algorithm", Category: "goes19_derived"},
+			{Key: "non_cmip_acht", Title: "Cloud Top Temperature", Description: "Cloud top temperature product", Category: "goes19_derived"},
+			{Key: "non_cmip_dsi", Title: "Derived Stability Index", Description: "Atmospheric stability", Category: "goes19_derived"},
+			{Key: "non_cmip_rrqpe", Title: "Rainfall Rate QPE", Description: "Quantitative precipitation estimate", Category: "goes19_derived"},
+			{Key: "non_cmip_tpw", Title: "Total Precipitable Water", Description: "Atmospheric water vapor", Category: "goes19_derived"},
 
 			// EMWIN Graphics Products
 			{Key: "radar_northeast", Title: "US Northeast Radar", Description: "Regional radar composite", Icon: "cloud-rain", Category: "emwin"},
@@ -80,6 +107,7 @@ func GetWeatherProducts(s3Client *s3.S3Client) gin.HandlerFunc {
 			{Key: "sat_goeswest_meso", Title: "GOES West Coast", Description: "GOES West coastal region", Category: "emwin"},
 			{Key: "analysis_np_surface", Title: "North Pacific Surface Analysis", Description: "Surface pressure analysis", Category: "emwin"},
 			{Key: "analysis_np_ice", Title: "North Pacific Sea Ice", Description: "Sea ice analysis", Category: "emwin"},
+			{Key: "analysis_na_surface", Title: "North America Surface Analysis", Description: "Continental surface analysis", Category: "emwin"},
 			{Key: "analysis_caribbean", Title: "Caribbean Surface Analysis", Description: "Caribbean surface analysis", Category: "emwin"},
 			{Key: "outlook_convective_day1", Title: "Convective Outlook Day 1", Description: "Severe weather outlook", Category: "emwin"},
 			{Key: "outlook_convective_day2", Title: "Convective Outlook Day 2", Description: "Severe weather outlook", Category: "emwin"},
@@ -91,14 +119,13 @@ func GetWeatherProducts(s3Client *s3.S3Client) gin.HandlerFunc {
 			{Key: "qpf_24hour_day1", Title: "24-Hour QPF Day 1", Description: "Daily precipitation forecast", Category: "emwin"},
 			{Key: "qpf_24hour_day2", Title: "24-Hour QPF Day 2", Description: "Daily precipitation forecast", Category: "emwin"},
 			{Key: "rainfall_excessive", Title: "Excessive Rainfall Outlook", Description: "Heavy rainfall potential", Category: "emwin"},
-			{Key: "analysis_na_surface", Title: "North America Surface Analysis", Description: "Continental surface analysis", Category: "emwin"},
 		}
 
 		c.JSON(http.StatusOK, gin.H{"products": products})
 	}
 }
 
-// GetProductImages returns images for a specific weather product
+// GetProductImages returns images for a specific weather product (UTC version)
 func GetProductImages(s3Client *s3.S3Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		productKey := c.Param("product")
@@ -117,29 +144,21 @@ func GetProductImages(s3Client *s3.S3Client) gin.HandlerFunc {
 		}
 
 		ctx := context.Background()
-		cstLocation, err := time.LoadLocation("America/Chicago")
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load timezone"})
-			return
-		}
-
 		var images []ProductImage
 
 		// Use the single bucket for all data
 		bucketName := s3Client.BucketName
 		baseURL := s3Client.BaseURL
 
+		// Get the filter pattern for EMWIN products
+		filterPattern := getEMWINPattern(productKey)
+		
 		// If date specified, get images for that date, otherwise get recent images
 		if dateStr != "" {
-			images, err = getProductImagesForDate(ctx, s3Client.Client, bucketName, baseURL, productPath, dateStr, cstLocation)
+			images = getProductImagesForDateUTC(ctx, s3Client.Client, bucketName, baseURL, productPath, dateStr, filterPattern)
 		} else {
 			// Get images from the last 7 days
-			images, err = getRecentProductImages(ctx, s3Client.Client, bucketName, baseURL, productPath, cstLocation, 7)
-		}
-
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			images = getRecentProductImagesUTC(ctx, s3Client.Client, bucketName, baseURL, productPath, 7, filterPattern)
 		}
 
 		c.JSON(http.StatusOK, gin.H{
@@ -150,11 +169,117 @@ func GetProductImages(s3Client *s3.S3Client) gin.HandlerFunc {
 	}
 }
 
-// getProductPath maps product keys to their paths within the bucket
+func getProductImagesForDateUTC(ctx context.Context, client *minio.Client, bucketName, baseURL, bucketPath, dateStr, filterPattern string) []ProductImage {
+	var images []ProductImage
+	
+	// Use the date directly as UTC
+	prefix := bucketPath + dateStr + "/"
+	log.Printf("DEBUG: Looking for images with prefix: %s in bucket: %s\n", prefix, bucketName)
+
+	objectCh := client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{
+		Prefix:    prefix,
+		Recursive: true,
+	})
+
+	for object := range objectCh {
+		if object.Err != nil {
+			log.Printf("DEBUG: Error listing object: %v\n", object.Err)
+			continue
+		}
+
+		// Skip non-image files
+		if !strings.HasSuffix(strings.ToLower(object.Key), ".png") &&
+			!strings.HasSuffix(strings.ToLower(object.Key), ".jpg") &&
+			!strings.HasSuffix(strings.ToLower(object.Key), ".gif") {
+			continue
+		}
+		
+		// Apply filter pattern if specified (for EMWIN products)
+		if filterPattern != "" && !strings.Contains(object.Key, filterPattern) {
+			continue
+		}
+
+		utcTime, err := extractTimestamp(object.Key)
+		if err != nil {
+			log.Printf("DEBUG: Could not extract timestamp from %s: %v\n", object.Key, err)
+			continue
+		}
+
+		images = append(images, ProductImage{
+			URL:       baseURL + object.Key,
+			Timestamp: utcTime, // Keep in UTC
+			Filename:  object.Key[strings.LastIndex(object.Key, "/")+1:],
+		})
+	}
+
+	// Sort by timestamp (newest first)
+	sort.Slice(images, func(i, j int) bool {
+		return images[i].Timestamp.After(images[j].Timestamp)
+	})
+
+	log.Printf("DEBUG: Found %d images for date %s\n", len(images), dateStr)
+	return images
+}
+
+func getRecentProductImagesUTC(ctx context.Context, client *minio.Client, bucketName, baseURL, bucketPath string, maxDaysBack int, filterPattern string) []ProductImage {
+	var images []ProductImage
+	nowUTC := time.Now().UTC()
+
+	for i := -1; i < maxDaysBack; i++ { // Start at -1 to include tomorrow
+		checkDate := nowUTC.AddDate(0, 0, -i).Format("2006-01-02")
+		prefix := bucketPath + checkDate + "/"
+
+		objectCh := client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{
+			Prefix:    prefix,
+			Recursive: true,
+		})
+
+		for object := range objectCh {
+			if object.Err != nil {
+				continue
+			}
+
+			// Skip non-image files
+			if !strings.HasSuffix(strings.ToLower(object.Key), ".png") &&
+				!strings.HasSuffix(strings.ToLower(object.Key), ".jpg") &&
+				!strings.HasSuffix(strings.ToLower(object.Key), ".gif") {
+				continue
+			}
+			
+			// Apply filter pattern if specified (for EMWIN products)
+			if filterPattern != "" && !strings.Contains(object.Key, filterPattern) {
+				continue
+			}
+
+			utcTime, err := extractTimestamp(object.Key)
+			if err != nil {
+				continue
+			}
+
+			images = append(images, ProductImage{
+				URL:       baseURL + object.Key,
+				Timestamp: utcTime, // Keep in UTC
+				Filename:  object.Key[strings.LastIndex(object.Key, "/")+1:],
+			})
+		}
+	}
+
+	// Sort by timestamp (newest first)
+	sort.Slice(images, func(i, j int) bool {
+		return images[i].Timestamp.After(images[j].Timestamp)
+	})
+
+	return images
+}
+
 func getProductPath(productKey string) string {
 	// Map product keys to their paths in the structured bucket
 	productPaths := map[string]string{
-		// GOES-19 ABI products
+		// GOES-18 ABI products
+		"goes18_fd_ch13":          "goes18/fd/ch13/",
+		"goes18_fd_ch13_enhanced":  "goes18/fd/ch13_enhanced/",
+		
+		// GOES-19 Full Disk ABI products
 		"fd_color":          "goes19/fd/fc/",
 		"fd_ch02":           "goes19/fd/ch02/",
 		"fd_ch07":           "goes19/fd/ch07/", 
@@ -170,157 +295,109 @@ func getProductPath(productKey string) string {
 		"fd_ch15":           "goes19/fd/ch15/",
 		"fd_ch15_enhanced":  "goes19/fd/ch15_enhanced/",
 		
-		// EMWIN products - using product code patterns
-		"radar_northeast":          "emwin/",  // Will filter by RADNTHES
-		"radar_southeast":          "emwin/",  // Will filter by RADSTHES
-		"radar_greatlakes":         "emwin/",  // Will filter by RADGRTLK
-		"radar_southernplains":     "emwin/",  // Will filter by RADSTHPL
-		"radar_northrockies":       "emwin/",  // Will filter by RADRCKNT
-		"radar_southrockies":       "emwin/",  // Will filter by RADRCKST
-		"radar_uppermiss":          "emwin/",  // Will filter by RADUMSVY
-		"radar_lowermiss":          "emwin/",  // Will filter by RADSMSVY
-		"radar_pacnw":              "emwin/",  // Will filter by RADPACNW
-		"radar_pacsw":              "emwin/",  // Will filter by RADPACSW
-		"radar_alaska":             "emwin/",  // Will filter by RADALLAK
-		"radar_hawaii":             "emwin/",  // Will filter by RADALLHI
-		"radar_guam":               "emwin/",  // Will filter by RADALLGU
-		"radar_pr":                 "emwin/",  // Will filter by RADALLPR
-		"radar_us_composite":       "emwin/",  // Will filter by RADREFUS
-		"sat_meteosat":            "emwin/",  // Will filter by INDCIRUS
-		"sat_himawari":            "emwin/",  // Will filter by GMS008JA
-		"sat_goes19_us":           "emwin/",  // Will filter by G16CIRUS
-		"sat_goes19_hurricane":     "emwin/",  // Will filter by G02HURUS
-		"sat_goes19_pr":           "emwin/",  // Will filter by IMGSJUPR
-		"sat_goeswest_fd":         "emwin/",  // Will filter by G10FDIUS
-		"sat_goeswest_meso":       "emwin/",  // Will filter by G10CIRUS
-		"analysis_np_surface":      "emwin/",  // Will filter by NPSA01US
-		"analysis_np_ice":          "emwin/",  // Will filter by NPIC01US
-		"analysis_caribbean":       "emwin/",  // Will filter by CSA001US
-		"outlook_convective_day1":  "emwin/",  // Will filter by MODDY1US
-		"outlook_convective_day2":  "emwin/",  // Will filter by MODDY2US
-		"alerts_watches_warnings":  "emwin/",  // Will filter by IMGWWAUS
-		"fronts_map":              "emwin/",  // Will filter by MOD96FBW
-		"flood_outlook":           "emwin/",  // Will filter by GPHJ88US
-		"qpf_6hour_color":         "emwin/",  // Will filter by MOD91EUS
-		"qpf_6hour":               "emwin/",  // Will filter by MOD93SUS
-		"qpf_24hour_day1":         "emwin/",  // Will filter by MODQP1US
-		"qpf_24hour_day2":         "emwin/",  // Will filter by MODQP2US
-		"rainfall_excessive":       "emwin/",  // Will filter by MOD94SUS
-		"analysis_na_surface":      "emwin/",  // Will filter by IMGFNT
+		// GOES-19 Mesoscale 1 products
+		"m1_color":          "goes19/m1/fc/",
+		"m1_ch02":           "goes19/m1/ch02/",
+		"m1_ch07":           "goes19/m1/ch07/",
+		"m1_ch07_enhanced":  "goes19/m1/ch07_enhanced/",
+		"m1_ch13":           "goes19/m1/ch13/",
+		"m1_ch13_enhanced":  "goes19/m1/ch13_enhanced/",
+		
+		// GOES-19 Mesoscale 2 products
+		"m2_color":          "goes19/m2/fc/",
+		"m2_ch02":           "goes19/m2/ch02/",
+		"m2_ch07":           "goes19/m2/ch07/",
+		"m2_ch07_enhanced":  "goes19/m2/ch07_enhanced/",
+		"m2_ch13":           "goes19/m2/ch13/",
+		"m2_ch13_enhanced":  "goes19/m2/ch13_enhanced/",
+		
+		// GOES-19 Non-CMIP products
+		"non_cmip_acha":     "goes19/non-cmip/fd/acha/",
+		"non_cmip_acht":     "goes19/non-cmip/fd/acht/",
+		"non_cmip_dsi":      "goes19/non-cmip/fd/dsi/",
+		"non_cmip_rrqpe":    "goes19/non-cmip/fd/rrqpe/",
+		"non_cmip_tpw":      "goes19/non-cmip/fd/tpw/",
+		
+		// EMWIN products
+		"radar_northeast":          "emwin/",
+		"radar_southeast":          "emwin/",
+		"radar_greatlakes":         "emwin/",
+		"radar_southernplains":     "emwin/",
+		"radar_northrockies":       "emwin/",
+		"radar_southrockies":       "emwin/",
+		"radar_uppermiss":          "emwin/",
+		"radar_lowermiss":          "emwin/",
+		"radar_pacnw":              "emwin/",
+		"radar_pacsw":              "emwin/",
+		"radar_alaska":             "emwin/",
+		"radar_hawaii":             "emwin/",
+		"radar_guam":               "emwin/",
+		"radar_pr":                 "emwin/",
+		"radar_us_composite":       "emwin/",
+		"sat_meteosat":            "emwin/",
+		"sat_himawari":            "emwin/",
+		"sat_goes19_us":           "emwin/",
+		"sat_goes19_hurricane":     "emwin/",
+		"sat_goes19_pr":           "emwin/",
+		"sat_goeswest_fd":         "emwin/",
+		"sat_goeswest_meso":       "emwin/",
+		"analysis_np_surface":      "emwin/",
+		"analysis_np_ice":          "emwin/",
+		"analysis_na_surface":      "emwin/",
+		"analysis_caribbean":       "emwin/",
+		"outlook_convective_day1":  "emwin/",
+		"outlook_convective_day2":  "emwin/",
+		"alerts_watches_warnings":  "emwin/",
+		"fronts_map":              "emwin/",
+		"flood_outlook":           "emwin/",
+		"qpf_6hour":               "emwin/",
+		"qpf_24hour_day1":         "emwin/",
+		"qpf_24hour_day2":         "emwin/",
+		"rainfall_excessive":      "emwin/",
 	}
-
-	// Return the path for the product key
-	if path, exists := productPaths[productKey]; exists {
-		return path
-	}
-
-	return ""
+	
+	return productPaths[productKey]
 }
 
-func getProductImagesForDate(ctx context.Context, client *minio.Client, bucketName, baseURL, bucketPath, dateStr string, cstLocation *time.Location) ([]ProductImage, error) {
-	cstMidnight, err := time.ParseInLocation("2006-01-02", dateStr, cstLocation)
-	if err != nil {
-		return nil, fmt.Errorf("invalid date format")
+func getEMWINPattern(productKey string) string {
+	// Map EMWIN product keys to their filename patterns
+	emwinPatterns := map[string]string{
+		"radar_northeast":          "RADNTHES",
+		"radar_southeast":          "RADSTHES",
+		"radar_greatlakes":         "RADGRTLK",
+		"radar_southernplains":     "RADSTHPL",
+		"radar_northrockies":       "RADRCKNT",
+		"radar_southrockies":       "RADRCKST",
+		"radar_uppermiss":          "RADUMSVY",
+		"radar_lowermiss":          "RADSMSVY",
+		"radar_pacnw":              "RADPACNW",
+		"radar_pacsw":              "RADPACSW",
+		"radar_alaska":             "RADALLAK",
+		"radar_hawaii":             "RADALLHI",
+		"radar_guam":               "RADALLGU",
+		"radar_pr":                 "RADALLPR",
+		"radar_us_composite":       "RADREFUS",
+		"sat_meteosat":            "INDCIRUS",
+		"sat_himawari":            "GMS008JA",
+		"sat_goes19_us":           "G16CIRUS",
+		"sat_goes19_hurricane":     "G02HURUS",
+		"sat_goes19_pr":           "IMGSJUPR",
+		"sat_goeswest_fd":         "G10FDIUS",
+		"sat_goeswest_meso":       "G10CIRUS",
+		"analysis_np_surface":      "NPSA01US",
+		"analysis_np_ice":          "NPIC01US",
+		"analysis_na_surface":      "IMGFNT12",
+		"analysis_caribbean":       "CSA001US",
+		"outlook_convective_day1":  "MODDY1US",
+		"outlook_convective_day2":  "MODDY2US",
+		"alerts_watches_warnings":  "IMGWWAUS",
+		"fronts_map":              "MOD96FBW",
+		"flood_outlook":           "GPHJ88US",
+		"qpf_6hour":               "MOD93SUS",
+		"qpf_24hour_day1":         "MODQP1US",
+		"qpf_24hour_day2":         "MODQP2US",
+		"rainfall_excessive":       "MOD94SUS",
 	}
-
-	utcStart := cstMidnight.UTC()
-	utcEnd := cstMidnight.Add(24 * time.Hour).UTC()
-	utcDates := []string{
-		utcStart.Format("2006-01-02"),
-		utcEnd.Format("2006-01-02"),
-	}
-
-	var images []ProductImage
-
-	for _, utcDate := range utcDates {
-		prefix := bucketPath + utcDate + "/"
-
-		objectCh := client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{
-			Prefix:    prefix,
-			Recursive: true,
-		})
-
-		for object := range objectCh {
-			if object.Err != nil {
-				return nil, object.Err
-			}
-
-			// Skip non-image files
-			if !strings.HasSuffix(strings.ToLower(object.Key), ".png") &&
-				!strings.HasSuffix(strings.ToLower(object.Key), ".jpg") &&
-				!strings.HasSuffix(strings.ToLower(object.Key), ".gif") {
-				continue
-			}
-
-			// Extract UTC timestamp from the object key
-			utcTime, err := extractTimestamp(object.Key)
-			if err != nil {
-				continue
-			}
-
-			// Convert to CST and check if it falls on our requested date
-			cstTime := utcTime.In(cstLocation)
-			if cstTime.Format("2006-01-02") == dateStr {
-				images = append(images, ProductImage{
-					URL:       baseURL + object.Key,
-					Timestamp: cstTime,
-					Filename:  object.Key[strings.LastIndex(object.Key, "/")+1:],
-				})
-			}
-		}
-	}
-
-	// Sort by timestamp
-	sort.Slice(images, func(i, j int) bool {
-		return images[i].Timestamp.Before(images[j].Timestamp)
-	})
-
-	return images, nil
-}
-
-func getRecentProductImages(ctx context.Context, client *minio.Client, bucketName, baseURL, bucketPath string, cstLocation *time.Location, maxDaysBack int) ([]ProductImage, error) {
-	var images []ProductImage
-	nowUTC := time.Now().UTC()
-
-	for i := -1; i < maxDaysBack; i++ { // Start at -1 to include tomorrow
-		checkDate := nowUTC.AddDate(0, 0, -i).Format("2006-01-02")
-		prefix := bucketPath + checkDate + "/"
-
-		objectCh := client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{
-			Prefix:    prefix,
-			Recursive: true,
-		})
-
-		for object := range objectCh {
-			if object.Err != nil {
-				return nil, object.Err
-			}
-
-			// Skip non-image files
-			if !strings.HasSuffix(strings.ToLower(object.Key), ".png") &&
-				!strings.HasSuffix(strings.ToLower(object.Key), ".jpg") &&
-				!strings.HasSuffix(strings.ToLower(object.Key), ".gif") {
-				continue
-			}
-
-			utcTime, err := extractTimestamp(object.Key)
-			if err != nil {
-				continue
-			}
-
-			cstTime := utcTime.In(cstLocation)
-			images = append(images, ProductImage{
-				URL:       baseURL + object.Key,
-				Timestamp: cstTime,
-				Filename:  object.Key[strings.LastIndex(object.Key, "/")+1:],
-			})
-		}
-	}
-
-	// Sort by timestamp (newest first)
-	sort.Slice(images, func(i, j int) bool {
-		return images[i].Timestamp.After(images[j].Timestamp)
-	})
-
-	return images, nil
+	
+	return emwinPatterns[productKey]
 }
