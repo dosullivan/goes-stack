@@ -1,0 +1,198 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { fetchEmwinCategories, fetchEmwinFiles, fetchEmwinContent } from '@/lib/api'
+import { format } from 'date-fns'
+import { FileText, Calendar, MapPin, RefreshCw } from 'lucide-react'
+
+interface EmwinFile {
+  key: string
+  filename: string
+  station?: string
+  timestamp?: string
+  size?: number
+}
+
+export function EmwinViewer() {
+  const [categories, setCategories] = useState<string[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [files, setFiles] = useState<EmwinFile[]>([])
+  const [selectedFile, setSelectedFile] = useState<EmwinFile | null>(null)
+  const [fileContent, setFileContent] = useState<string>('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+
+  useEffect(() => {
+    loadCategories()
+  }, [])
+
+  const loadCategories = async () => {
+    try {
+      const data = await fetchEmwinCategories()
+      setCategories(data.categories || [])
+      if (data.categories && data.categories.length > 0) {
+        setSelectedCategory(data.categories[0])
+      }
+    } catch (error) {
+      console.error('Error loading EMWIN categories:', error)
+    }
+  }
+
+  useEffect(() => {
+    if (selectedCategory) {
+      loadFiles()
+    }
+  }, [selectedCategory, selectedDate])
+
+  const loadFiles = async () => {
+    setIsLoading(true)
+    try {
+      const data = await fetchEmwinFiles(selectedCategory, selectedDate)
+      setFiles(data.files || [])
+      setSelectedFile(null)
+      setFileContent('')
+    } catch (error) {
+      console.error('Error loading EMWIN files:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadFileContent = async (file: EmwinFile) => {
+    setSelectedFile(file)
+    setIsLoading(true)
+    try {
+      const data = await fetchEmwinContent(file.key)
+      setFileContent(data.content || '')
+    } catch (error) {
+      console.error('Error loading file content:', error)
+      setFileContent('Error loading file content')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const formatFileInfo = (file: EmwinFile) => {
+    const parts = file.filename.split('_')
+    const station = parts.find(p => p.length === 4 && p.match(/^[A-Z]{4}$/))
+    const timestamp = parts.find(p => p.length > 10 && p.match(/^\d+/))
+    
+    return {
+      station: station || file.station || 'Unknown',
+      time: timestamp ? format(new Date(timestamp.substring(0, 8)), 'MMM dd, HH:mm') : 'Unknown'
+    }
+  }
+
+  return (
+    <div className="h-full flex flex-col p-4">
+      <div className="mb-4 flex gap-4 items-center">
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map(category => (
+              <SelectItem key={category} value={category}>
+                {category}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={loadFiles}
+          disabled={isLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
+      </div>
+
+      <div className="flex-1 flex gap-4 overflow-hidden">
+        <Card className="w-1/3 flex flex-col">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">Available Files</CardTitle>
+            <CardDescription className="text-xs">
+              {files.length} files in {selectedCategory}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden p-0">
+            <ScrollArea className="h-full px-4">
+              <div className="space-y-2 pb-4">
+                {files.map(file => {
+                  const info = formatFileInfo(file)
+                  return (
+                    <Button
+                      key={file.key}
+                      variant={selectedFile?.key === file.key ? "secondary" : "ghost"}
+                      className="w-full justify-start h-auto py-2 px-3"
+                      onClick={() => loadFileContent(file)}
+                    >
+                      <div className="flex flex-col items-start w-full">
+                        <div className="flex items-center gap-2 text-sm">
+                          <FileText className="h-3 w-3" />
+                          <span className="truncate">{file.filename}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {info.station}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {info.time}
+                          </span>
+                        </div>
+                      </div>
+                    </Button>
+                  )
+                })}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        <Card className="flex-1 flex flex-col">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm">
+              {selectedFile ? selectedFile.filename : 'File Content'}
+            </CardTitle>
+            {selectedFile && (
+              <CardDescription className="text-xs">
+                {selectedFile.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : ''}
+              </CardDescription>
+            )}
+          </CardHeader>
+          <CardContent className="flex-1 overflow-hidden p-0">
+            <ScrollArea className="h-full">
+              {isLoading ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  Loading content...
+                </div>
+              ) : fileContent ? (
+                <pre className="p-4 text-xs font-mono whitespace-pre-wrap">
+                  {fileContent}
+                </pre>
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  Select a file to view its content
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}

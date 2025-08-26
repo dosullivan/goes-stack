@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Goes Viewer',
-  description: 'GOES 16 Viewer, with images pulled from a Raspberry Pi',
+  description: 'GOES Viewer, with data pulled from a Raspberry Pi',
 }
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="apple-mobile-web-app-title" content="Goes Viewer" />
       </head>
@@ -29,9 +29,6 @@ export default function RootLayout({
           storageKey="goes-viewer-theme"
         >
           <main className="h-full container mx-auto px-4">
-            <header className="mb-2 flex justify-between items-center">
-              <h1 className="text-1xl font-bold">GOES 19 Viewer</h1>
-            </header>
             {children}
           </main>
         </ThemeProvider>

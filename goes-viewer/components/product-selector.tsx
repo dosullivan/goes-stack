@@ -1,0 +1,164 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
+import { ChevronRight, ChevronDown, Satellite, Cloud, Radar, FileText } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+interface Product {
+  id: string
+  name: string
+  category: string
+  satellite?: string
+  region?: string
+  channel?: string
+  type?: string
+}
+
+interface ProductGroup {
+  name: string
+  icon: React.ReactNode
+  products: Product[]
+  expanded: boolean
+}
+
+interface ProductSelectorProps {
+  onProductSelect: (product: Product) => void
+  selectedProduct: Product | null
+  products: Product[]
+}
+
+export function ProductSelector({ onProductSelect, selectedProduct, products }: ProductSelectorProps) {
+  const [productGroups, setProductGroups] = useState<ProductGroup[]>([])
+
+  useEffect(() => {
+    // Organize products into groups
+    const groups: Record<string, Product[]> = {}
+    
+    if (products && Array.isArray(products)) {
+      products.forEach(product => {
+        const category = product.satellite || product.category || 'Other'
+        if (!groups[category]) {
+          groups[category] = []
+        }
+        groups[category].push(product)
+      })
+    }
+
+    // Create group objects with icons
+    const groupedProducts: ProductGroup[] = Object.entries(groups).map(([name, items]) => ({
+      name,
+      icon: getIconForCategory(name),
+      products: items.sort((a, b) => a.name.localeCompare(b.name)),
+      expanded: name === 'goes19' // Default expand GOES-19
+    }))
+
+    setProductGroups(groupedProducts)
+  }, [products])
+
+  const getIconForCategory = (category: string): React.ReactNode => {
+    const lowerCategory = category.toLowerCase()
+    if (lowerCategory.includes('goes') || lowerCategory.includes('himawari')) {
+      return <Satellite className="h-4 w-4" />
+    } else if (lowerCategory.includes('radar')) {
+      return <Radar className="h-4 w-4" />
+    } else if (lowerCategory.includes('emwin') || lowerCategory.includes('text')) {
+      return <FileText className="h-4 w-4" />
+    } else {
+      return <Cloud className="h-4 w-4" />
+    }
+  }
+
+  const toggleGroup = (groupName: string) => {
+    setProductGroups(groups =>
+      groups.map(group =>
+        group.name === groupName
+          ? { ...group, expanded: !group.expanded }
+          : group
+      )
+    )
+  }
+
+  const formatProductName = (product: Product): string => {
+    // If it's already a well-formatted name (from backend), use it directly
+    if (product.name && !product.name.includes('Unknown')) {
+      return product.name
+    }
+    // Otherwise, try to format based on channel/region info
+    if (product.channel) {
+      return `Channel ${product.channel.replace('ch', '')}${product.region ? ` - ${product.region.toUpperCase()}` : ''}`
+    }
+    return product.name
+  }
+
+  const getProductDescription = (product: Product): string | null => {
+    // Return null to use backend descriptions instead of our manual mapping
+    return null
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b">
+        <h2 className="text-lg font-semibold">Data Products</h2>
+      </div>
+      
+      <ScrollArea className="flex-1">
+        <div className="p-2">
+          {productGroups.map(group => (
+            <div key={group.name} className="mb-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start px-2"
+                onClick={() => toggleGroup(group.name)}
+              >
+                {group.expanded ? (
+                  <ChevronDown className="h-4 w-4 mr-2" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                )}
+                {group.icon}
+                <span className="ml-2 font-medium capitalize">
+                  {group.name.replace(/([A-Z])/g, ' $1').trim()}
+                </span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {group.products.length}
+                </span>
+              </Button>
+              
+              {group.expanded && (
+                <div className="ml-4 mt-1">
+                  {group.products.map(product => {
+                    const description = getProductDescription(product)
+                    return (
+                      <Button
+                        key={product.id}
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "w-full justify-start px-2 py-1 h-auto",
+                          selectedProduct?.id === product.id && "bg-accent"
+                        )}
+                        onClick={() => onProductSelect(product)}
+                      >
+                        <div className="flex flex-col items-start">
+                          <span className="text-sm">{formatProductName(product)}</span>
+                          {description && (
+                            <span className="text-xs text-muted-foreground">
+                              {description}
+                            </span>
+                          )}
+                        </div>
+                      </Button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
