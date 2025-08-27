@@ -13,6 +13,7 @@ MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
 BUCKET_NAME=${BUCKET_NAME:-goes-data}
 SOURCE_DIR="/data"
 LOG_PREFIX="[$(date '+%Y-%m-%d %H:%M:%S')]"
+ALLOW_REMOTE_DELETIONS=${ALLOW_REMOTE_DELETIONS:-false}
 
 echo "$LOG_PREFIX Starting upload process..."
 
@@ -38,9 +39,14 @@ if [ "$file_count" -eq 0 ]; then
     exit 0
 fi
 
-# Sync files to MinIO with public ACL
+# Sync files to MinIO (safe by default: do NOT delete remote files)
 echo "$LOG_PREFIX Syncing files to MinIO bucket: $BUCKET_NAME"
-mc mirror --remove --exclude "*.tmp" --exclude "*.partial" "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
+if [ "$ALLOW_REMOTE_DELETIONS" = "true" ]; then
+    echo "$LOG_PREFIX WARNING: Remote deletions are ENABLED (ALLOW_REMOTE_DELETIONS=true)"
+    mc mirror --remove --exclude "*.tmp" --exclude "*.partial" "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
+else
+    mc mirror --exclude "*.tmp" --exclude "*.partial" "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
+fi
 
 # Verify upload success and cleanup
 echo "$LOG_PREFIX Cleaning up successfully uploaded files..."
