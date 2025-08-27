@@ -23,9 +23,16 @@ interface ViewModeSelectorProps {
 }
 
 export function ViewModeSelector({ viewMode, onViewModeChange }: ViewModeSelectorProps) {
+  const handleModeChange = (value: string) => {
+    if (value) {
+      console.log('Switching view mode to:', value)
+      onViewModeChange(value as ViewMode)
+    }
+  }
+  
   return (
     <TooltipProvider>
-      <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && onViewModeChange(value as ViewMode)}>
+      <ToggleGroup type="single" value={viewMode} onValueChange={handleModeChange}>
         <Tooltip>
           <TooltipTrigger asChild>
             <ToggleGroupItem value="single" aria-label="Single view">

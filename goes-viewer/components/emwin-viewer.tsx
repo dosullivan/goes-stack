@@ -16,7 +16,8 @@ import { format } from 'date-fns'
 import { FileText, Calendar, MapPin, RefreshCw } from 'lucide-react'
 
 interface EmwinFile {
-  key: string
+  key?: string
+  url?: string
   filename: string
   station?: string
   timestamp?: string
@@ -24,7 +25,7 @@ interface EmwinFile {
 }
 
 export function EmwinViewer() {
-  const [categories, setCategories] = useState<string[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [files, setFiles] = useState<EmwinFile[]>([])
   const [selectedFile, setSelectedFile] = useState<EmwinFile | null>(null)
@@ -41,7 +42,7 @@ export function EmwinViewer() {
       const data = await fetchEmwinCategories()
       setCategories(data.categories || [])
       if (data.categories && data.categories.length > 0) {
-        setSelectedCategory(data.categories[0])
+        setSelectedCategory(data.categories[0].key)
       }
     } catch (error) {
       console.error('Error loading EMWIN categories:', error)
@@ -72,7 +73,21 @@ export function EmwinViewer() {
     setSelectedFile(file)
     setIsLoading(true)
     try {
-      const data = await fetchEmwinContent(file.key)
+      // Extract the object key from the URL if needed
+      let key = file.key
+      if (!key && file.url) {
+        // Extract path after bucket name
+        const match = file.url.match(/goes-data\/(.*)$/)
+        if (match) {
+          key = match[1]
+        }
+      }
+      
+      if (!key) {
+        throw new Error('No valid key found for file')
+      }
+      
+      const data = await fetchEmwinContent(key)
       setFileContent(data.content || '')
     } catch (error) {
       console.error('Error loading file content:', error)
@@ -83,13 +98,41 @@ export function EmwinViewer() {
   }
 
   const formatFileInfo = (file: EmwinFile) => {
-    const parts = file.filename.split('_')
-    const station = parts.find(p => p.length === 4 && p.match(/^[A-Z]{4}$/))
-    const timestamp = parts.find(p => p.length > 10 && p.match(/^\d+/))
+    // Use the station from the API response if available
+    const station = file.station || 'Unknown'
+    
+    // Parse the timestamp if available
+    let time = 'Unknown'
+    if (file.timestamp) {
+      try {
+        const date = new Date(file.timestamp)
+        if (!isNaN(date.getTime())) {
+          time = format(date, 'MMM dd, HH:mm')
+        }
+      } catch (e) {
+        // If parsing fails, try extracting from filename
+        const match = file.filename.match(/(\d{14})/)
+        if (match) {
+          try {
+            const year = parseInt(match[1].substring(0, 4))
+            const month = parseInt(match[1].substring(4, 6)) - 1
+            const day = parseInt(match[1].substring(6, 8))
+            const hour = parseInt(match[1].substring(8, 10))
+            const minute = parseInt(match[1].substring(10, 12))
+            const date = new Date(year, month, day, hour, minute)
+            if (!isNaN(date.getTime())) {
+              time = format(date, 'MMM dd, HH:mm')
+            }
+          } catch (e2) {
+            // Keep as 'Unknown'
+          }
+        }
+      }
+    }
     
     return {
-      station: station || file.station || 'Unknown',
-      time: timestamp ? format(new Date(timestamp.substring(0, 8)), 'MMM dd, HH:mm') : 'Unknown'
+      station,
+      time
     }
   }
 
@@ -102,8 +145,8 @@ export function EmwinViewer() {
           </SelectTrigger>
           <SelectContent>
             {categories.map(category => (
-              <SelectItem key={category} value={category}>
-                {category}
+              <SelectItem key={category.key} value={category.key}>
+                {category.title || category.key}
               </SelectItem>
             ))}
           </SelectContent>
@@ -134,8 +177,8 @@ export function EmwinViewer() {
                   const info = formatFileInfo(file)
                   return (
                     <Button
-                      key={file.key}
-                      variant={selectedFile?.key === file.key ? "secondary" : "ghost"}
+                      key={file.url || file.filename}
+                      variant={selectedFile?.url === file.url ? "secondary" : "ghost"}
                       className="w-full justify-start h-auto py-2 px-3"
                       onClick={() => loadFileContent(file)}
                     >

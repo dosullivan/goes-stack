@@ -6,6 +6,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Force scrollbar gutter to prevent layout shift */
+.scrollbar-gutter-stable {
+  scrollbar-gutter: stable;
+}
+
 @layer base {
    html, body {
     margin: 0;

@@ -19,7 +19,12 @@ import {
   Download,
   ZoomIn,
   ZoomOut,
-  RefreshCw
+  RefreshCw,
+  Maximize2,
+  Grid3X3,
+  SplitSquareHorizontal,
+  Play,
+  FileText
 } from 'lucide-react'
 import { 
   fetchLatestImage, 
@@ -174,6 +179,11 @@ export default function Home() {
     console.log('Selected product:', product)
     setSelectedProduct(product)
     setIsImageLoading(true)
+    
+    // Close sidebar on mobile after selection
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false)
+    }
     
     try {
       const productImages = await fetchProductImages(product.id, currentDate)
@@ -363,26 +373,23 @@ export default function Home() {
   }, [currentIndex, images, viewMode, sidebarOpen])
 
   const renderSingleView = () => (
-    <div className="flex-1 flex flex-col items-center">
+    <div className="flex-1 flex flex-col items-center overflow-hidden">
       {currentImage ? (
-        <div className="relative w-full max-w-6xl flex-1 mb-2 flex flex-col">
-          <div className="relative flex-1">
+        <div className="w-full flex-1 flex flex-col p-2">
+          <div className="relative flex-1 overflow-hidden">
             {isImageLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                 <div className="text-center">Loading image...</div>
               </div>
             )}
-            <Image
+            <img
               key={currentImage}
               src={currentImage}
               alt="Satellite image"
-              fill
-              priority
+              className="w-full h-full object-contain"
               style={{ 
-                objectFit: 'contain',
                 transform: `scale(${zoom})`
               }}
-              onLoadingComplete={() => setIsImageLoading(false)}
               onLoad={() => setIsImageLoading(false)}
             />
           </div>
@@ -404,16 +411,20 @@ export default function Home() {
       )}
       
       {currentImage && (
-        <div className="flex justify-center items-center gap-4 mb-2">
-        <Button 
-          className="w-32" 
-          onClick={handlePrevious} 
-          disabled={currentIndex === 0}
-        >
-          <ChevronLeft className="mr-2 h-4 w-4" /> Previous
-        </Button>
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-2 px-2">
+        <div className="flex gap-2 order-2 sm:order-1">
+          <Button 
+            className="sm:w-32" 
+            size="sm"
+            onClick={handlePrevious} 
+            disabled={currentIndex === 0}
+          >
+            <ChevronLeft className="sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Previous</span>
+          </Button>
+        </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-2 order-1 sm:order-2">
           <Button
             size="icon"
             variant="outline"
@@ -439,13 +450,17 @@ export default function Home() {
           </Button>
         </div>
         
-        <Button 
-          className="w-32" 
-          onClick={handleNext} 
-          disabled={currentIndex === images.length - 1}
-        >
-          Next <ChevronRight className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="flex gap-2 order-3">
+          <Button 
+            className="sm:w-32" 
+            size="sm"
+            onClick={handleNext} 
+            disabled={currentIndex === images.length - 1}
+          >
+            <span className="hidden sm:inline">Next</span>
+            <ChevronRight className="sm:ml-2 h-4 w-4" />
+          </Button>
+        </div>
         </div>
       )}
     </div>
@@ -581,16 +596,46 @@ export default function Home() {
             size="icon"
             variant="ghost"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden"
+            className=""
           >
             {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
           </Button>
           
-          <h1 className="text-lg font-semibold">GOES Stack Viewer</h1>
+          <h1 className="text-lg font-semibold hidden sm:block">GOES Data Viewer</h1>
         </div>
         
-        <div className="flex items-center gap-2">
-          <ViewModeSelector viewMode={viewMode} onViewModeChange={setViewMode} />
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="hidden sm:block">
+            <ViewModeSelector viewMode={viewMode} onViewModeChange={setViewMode} />
+          </div>
+          
+          {/* Mobile view mode selector */}
+          <Popover>
+            <PopoverTrigger asChild className="sm:hidden">
+              <Button variant="outline" size="icon">
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="end">
+              <div className="space-y-1">
+                <Button variant={viewMode === 'single' ? 'secondary' : 'ghost'} size="sm" className="w-full justify-start" onClick={() => setViewMode('single')}>
+                  <Maximize2 className="h-4 w-4 mr-2" /> Single View
+                </Button>
+                <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="sm" className="w-full justify-start" onClick={() => setViewMode('grid')}>
+                  <Grid3X3 className="h-4 w-4 mr-2" /> Grid View
+                </Button>
+                <Button variant={viewMode === 'compare' ? 'secondary' : 'ghost'} size="sm" className="w-full justify-start" onClick={() => setViewMode('compare')}>
+                  <SplitSquareHorizontal className="h-4 w-4 mr-2" /> Compare
+                </Button>
+                <Button variant={viewMode === 'animation' ? 'secondary' : 'ghost'} size="sm" className="w-full justify-start" onClick={() => setViewMode('animation')}>
+                  <Play className="h-4 w-4 mr-2" /> Animation
+                </Button>
+                <Button variant={viewMode === 'emwin' ? 'secondary' : 'ghost'} size="sm" className="w-full justify-start" onClick={() => setViewMode('emwin')}>
+                  <FileText className="h-4 w-4 mr-2" /> EMWIN Text
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
           
           <Popover>
             <PopoverTrigger asChild>
@@ -622,7 +667,7 @@ export default function Home() {
             </PopoverTrigger>
             <PopoverContent className="w-80 p-4" align="end">
               <div className="space-y-2 text-sm">
-                <p className="font-semibold">GOES Stack Viewer</p>
+                <p className="font-semibold">GOES Data Viewer</p>
                 <p>A modern interface for viewing GOES satellite imagery and weather data.</p>
                 <p>Features:</p>
                 <ul className="list-disc list-inside ml-2">
@@ -644,19 +689,30 @@ export default function Home() {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar - only show for image modes */}
         {viewMode !== 'emwin' && (
-          <div className={cn(
-            "border-r bg-muted/10 transition-all duration-300",
-            sidebarOpen ? "w-64" : "w-0",
-            "lg:w-64"
-          )}>
+          <>
+            {/* Mobile sidebar backdrop */}
             {sidebarOpen && (
-              <ProductSelector
-                products={weatherProducts}
-                selectedProduct={selectedProduct}
-                onProductSelect={handleProductSelect}
+              <div 
+                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                onClick={() => setSidebarOpen(false)}
               />
             )}
-          </div>
+            
+            {/* Sidebar */}
+            <div className={cn(
+              "bg-background border-r bg-muted/10 transition-all duration-300",
+              "fixed lg:relative inset-y-0 left-0 z-50 lg:z-0",
+              sidebarOpen ? "w-80" : "w-0"
+            )}>
+              {sidebarOpen && (
+                <ProductSelector
+                  products={weatherProducts}
+                  selectedProduct={selectedProduct}
+                  onProductSelect={handleProductSelect}
+                />
+              )}
+            </div>
+          </>
         )}
         
         {/* Content area */}

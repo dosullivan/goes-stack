@@ -103,7 +103,7 @@ export function ProductSelector({ onProductSelect, selectedProduct, products }: 
         <h2 className="text-lg font-semibold">Data Products</h2>
       </div>
       
-      <ScrollArea className="flex-1">
+      <div className="flex-1 overflow-y-auto scrollbar-gutter-stable">
         <div className="p-2">
           {productGroups.map(group => (
             <div key={group.name} className="mb-2">
@@ -113,18 +113,20 @@ export function ProductSelector({ onProductSelect, selectedProduct, products }: 
                 className="w-full justify-start px-2"
                 onClick={() => toggleGroup(group.name)}
               >
-                {group.expanded ? (
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 mr-2" />
-                )}
-                {group.icon}
-                <span className="ml-2 font-medium capitalize">
-                  {group.name.replace(/([A-Z])/g, ' $1').trim()}
-                </span>
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {group.products.length}
-                </span>
+                <div className="flex items-center w-full">
+                  {group.expanded ? (
+                    <ChevronDown className="h-4 w-4 mr-2 flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 mr-2 flex-shrink-0" />
+                  )}
+                  {group.icon}
+                  <span className="ml-2 font-medium capitalize flex-1 text-left truncate">
+                    {group.name.replace(/([A-Z])/g, ' $1').trim()}
+                  </span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {group.products.length}
+                  </span>
+                </div>
               </Button>
               
               {group.expanded && (
@@ -158,7 +160,7 @@ export function ProductSelector({ onProductSelect, selectedProduct, products }: 
             </div>
           ))}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   )
 }
