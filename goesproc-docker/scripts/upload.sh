@@ -17,6 +17,13 @@ ALLOW_REMOTE_DELETIONS=${ALLOW_REMOTE_DELETIONS:-false}
 
 echo "$LOG_PREFIX Starting upload process..."
 
+# Run EMWIN preprocessing if the script exists
+PREPROCESS_SCRIPT="/scripts/preprocess_emwin.sh"
+if [[ -f "$PREPROCESS_SCRIPT" ]] && [[ -x "$PREPROCESS_SCRIPT" ]]; then
+    echo "$LOG_PREFIX Running EMWIN file preprocessing..."
+    "$PREPROCESS_SCRIPT" || echo "$LOG_PREFIX WARNING: EMWIN preprocessing failed"
+fi
+
 # Verify MinIO connection
 if ! mc ls minio/ > /dev/null 2>&1; then
     echo "$LOG_PREFIX ERROR: Cannot connect to MinIO at $MINIO_ENDPOINT"

@@ -19,7 +19,7 @@ services:
       dockerfile: Dockerfile.uploader
     container_name: goesproc-uploader
     volumes:
-      - ./data:/data:ro  # Read-only access to all goesproc data
+      - ./data:/data  # Read-write access needed for EMWIN preprocessing
       - ./scripts:/scripts:ro
       - ./logs:/logs  # For upload logs
     environment:
