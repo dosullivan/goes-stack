@@ -24,18 +24,28 @@ interface EmwinFile {
   size?: number
 }
 
-export function EmwinViewer() {
+interface EmwinViewerProps {
+  selectedDate?: Date
+}
+
+export function EmwinViewer({ selectedDate: propSelectedDate }: EmwinViewerProps) {
   const [categories, setCategories] = useState<any[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [files, setFiles] = useState<EmwinFile[]>([])
   const [selectedFile, setSelectedFile] = useState<EmwinFile | null>(null)
   const [fileContent, setFileContent] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date>(propSelectedDate || new Date())
 
   useEffect(() => {
     loadCategories()
   }, [])
+
+  useEffect(() => {
+    if (propSelectedDate) {
+      setSelectedDate(propSelectedDate)
+    }
+  }, [propSelectedDate])
 
   const loadCategories = async () => {
     try {
@@ -58,12 +68,17 @@ export function EmwinViewer() {
   const loadFiles = async () => {
     setIsLoading(true)
     try {
+      console.log('Loading files for category:', selectedCategory, 'date:', selectedDate)
       const data = await fetchEmwinFiles(selectedCategory, selectedDate)
-      setFiles(data.files || [])
+      console.log('EMWIN files response:', data)
+      const fileList = data.files || []
+      setFiles(fileList)
       setSelectedFile(null)
       setFileContent('')
+      console.log(`Loaded ${fileList.length} files`)
     } catch (error) {
       console.error('Error loading EMWIN files:', error)
+      setFiles([])
     } finally {
       setIsLoading(false)
     }
@@ -76,16 +91,27 @@ export function EmwinViewer() {
       // Extract the object key from the URL if needed
       let key = file.key
       if (!key && file.url) {
-        // Extract path after bucket name
-        const match = file.url.match(/goes-data\/(.*)$/)
-        if (match) {
-          key = match[1]
+        // Extract path after the base URL
+        // URL format: https://example.com/bucket-name/emwin/2024-12-25/filename.TXT
+        const urlParts = file.url.split('/')
+        const emwinIndex = urlParts.indexOf('emwin')
+        if (emwinIndex !== -1) {
+          key = urlParts.slice(emwinIndex).join('/')
+        } else {
+          // Try to extract everything after the domain
+          const match = file.url.match(/https?:\/\/[^\/]+\/(.*)/)
+          if (match) {
+            key = match[1]
+          }
         }
       }
       
       if (!key) {
+        console.error('Could not extract key from file:', file)
         throw new Error('No valid key found for file')
       }
+      
+      console.log('Loading content for key:', key)
       
       const data = await fetchEmwinContent(key)
       setFileContent(data.content || '')

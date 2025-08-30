@@ -40,9 +40,9 @@ import { ProductSelector } from '@/components/product-selector'
 import { ViewModeSelector } from '@/components/view-mode-selector'
 import { AnimationControls } from '@/components/animation-controls'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { EmwinViewer } from '@/components/emwin-viewer'
+import Link from 'next/link'
 
-type ViewMode = 'single' | 'grid' | 'compare' | 'animation' | 'emwin'
+type ViewMode = 'single' | 'grid' | 'compare' | 'animation'
 
 interface WeatherProduct {
   id: string
@@ -359,9 +359,6 @@ export default function Home() {
         case '4':
           setViewMode('animation')
           break
-        case '5':
-          setViewMode('emwin')
-          break
         case 's':
           setSidebarOpen(!sidebarOpen)
           break
@@ -578,11 +575,6 @@ export default function Home() {
     </div>
   )
 
-  const renderEmwinView = () => (
-    <div className="flex-1 overflow-hidden">
-      <EmwinViewer />
-    </div>
-  )
 
   return (
     <div className="h-screen w-full flex flex-col">
@@ -627,9 +619,6 @@ export default function Home() {
                 <Button variant={viewMode === 'animation' ? 'secondary' : 'ghost'} size="sm" className="w-full justify-start" onClick={() => setViewMode('animation')}>
                   <Play className="h-4 w-4 mr-2" /> Animation
                 </Button>
-                <Button variant={viewMode === 'emwin' ? 'secondary' : 'ghost'} size="sm" className="w-full justify-start" onClick={() => setViewMode('emwin')}>
-                  <FileText className="h-4 w-4 mr-2" /> EMWIN Text
-                </Button>
               </div>
             </PopoverContent>
           </Popover>
@@ -654,6 +643,12 @@ export default function Home() {
             </PopoverContent>
           </Popover>
           
+          <Link href="/emwin">
+            <Button variant="outline" size="icon" title="EMWIN Text Data">
+              <FileText className="h-4 w-4" />
+            </Button>
+          </Link>
+          
           <ThemeToggle />
           
           <Popover>
@@ -668,13 +663,13 @@ export default function Home() {
                 <p>A modern interface for viewing GOES satellite imagery and weather data.</p>
                 <p>Features:</p>
                 <ul className="list-disc list-inside ml-2">
-                  <li>Multiple view modes (single, grid, compare, animation, EMWIN)</li>
+                  <li>Multiple view modes (single, grid, compare, animation)</li>
                   <li>Support for all GOES channels and products</li>
                   <li>EMWIN text data viewer</li>
                   <li>Himawari satellite support</li>
                 </ul>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Press 'S' to toggle sidebar, 1-5 for view modes, arrow keys to navigate
+                  Press 'S' to toggle sidebar, 1-4 for view modes, arrow keys to navigate
                 </p>
               </div>
             </PopoverContent>
@@ -684,8 +679,8 @@ export default function Home() {
       
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar - only show for image modes */}
-        {viewMode !== 'emwin' && (
+        {/* Sidebar */}
+        {(
           <>
             {/* Mobile sidebar backdrop */}
             {sidebarOpen && (
@@ -718,7 +713,6 @@ export default function Home() {
           {viewMode === 'grid' && renderGridView()}
           {viewMode === 'compare' && renderCompareView()}
           {viewMode === 'animation' && renderAnimationView()}
-          {viewMode === 'emwin' && renderEmwinView()}
         </div>
       </div>
     </div>

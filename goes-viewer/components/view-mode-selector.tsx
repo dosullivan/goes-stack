@@ -5,8 +5,7 @@ import {
   Maximize2, 
   Grid3X3, 
   SplitSquareHorizontal, 
-  Play,
-  FileText
+  Play
 } from 'lucide-react'
 import {
   Tooltip,
@@ -15,7 +14,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 
-type ViewMode = 'single' | 'grid' | 'compare' | 'animation' | 'emwin'
+type ViewMode = 'single' | 'grid' | 'compare' | 'animation'
 
 interface ViewModeSelectorProps {
   viewMode: ViewMode
@@ -77,16 +76,6 @@ export function ViewModeSelector({ viewMode, onViewModeChange }: ViewModeSelecto
           </TooltipContent>
         </Tooltip>
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <ToggleGroupItem value="emwin" aria-label="EMWIN data view">
-              <FileText className="h-4 w-4" />
-            </ToggleGroupItem>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>EMWIN Text Data</p>
-          </TooltipContent>
-        </Tooltip>
       </ToggleGroup>
     </TooltipProvider>
   )
