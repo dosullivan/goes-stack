@@ -52,17 +52,14 @@ echo "$LOG_PREFIX Syncing files to MinIO bucket: $BUCKET_NAME"
 # --overwrite: Force overwrite of existing objects
 # --preserve: Preserve file attributes
 # --exclude: Skip temporary files
-# --concurrent: Number of concurrent uploads (default is 4, increase for faster uploads)
 if [ "$ALLOW_REMOTE_DELETIONS" = "true" ]; then
     echo "$LOG_PREFIX WARNING: Remote deletions are ENABLED"
     mc mirror --remove --overwrite --preserve \
         --exclude "*.tmp" --exclude "*.partial" \
-        --concurrent 8 \
         "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
 else
     mc mirror --overwrite --preserve \
         --exclude "*.tmp" --exclude "*.partial" \
-        --concurrent 8 \
         "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
 fi
 
