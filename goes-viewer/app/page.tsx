@@ -375,8 +375,8 @@ export default function Home() {
   const renderSingleView = () => (
     <div className="flex-1 flex flex-col items-center overflow-hidden">
       {currentImage ? (
-        <div className="w-full flex-1 flex flex-col p-2">
-          <div className="relative flex-1 overflow-hidden">
+        <div className="w-full flex-1 flex flex-col p-2 min-h-0">
+          <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden">
             {isImageLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                 <div className="text-center">Loading image...</div>
@@ -386,7 +386,7 @@ export default function Home() {
               key={currentImage}
               src={currentImage}
               alt="Satellite image"
-              className="w-full h-full object-contain"
+              className="max-w-full max-h-full object-contain"
               style={{ 
                 transform: `scale(${zoom})`
               }}
@@ -512,26 +512,24 @@ export default function Home() {
   )
 
   const renderCompareView = () => (
-    <div className="flex-1 flex gap-2 p-4">
+    <div className="flex-1 flex gap-2 p-4 min-h-0">
       {compareImages.length >= 2 ? (
         <>
-          <div className="flex-1 relative border rounded-lg overflow-hidden">
-            <Image
+          <div className="flex-1 min-h-0 flex items-center justify-center relative border rounded-lg overflow-hidden">
+            <img
               src={compareImages[0]}
               alt="Compare image 1"
-              fill
-              style={{ objectFit: 'contain' }}
+              className="max-w-full max-h-full object-contain"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
               {parseTimestamp(compareImages[0])}
             </div>
           </div>
-          <div className="flex-1 relative border rounded-lg overflow-hidden">
-            <Image
+          <div className="flex-1 min-h-0 flex items-center justify-center relative border rounded-lg overflow-hidden">
+            <img
               src={compareImages[1]}
               alt="Compare image 2"
-              fill
-              style={{ objectFit: 'contain' }}
+              className="max-w-full max-h-full object-contain"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
               {parseTimestamp(compareImages[1])}
@@ -547,16 +545,15 @@ export default function Home() {
   )
 
   const renderAnimationView = () => (
-    <div className="flex-1 flex flex-col">
-      <div className="flex-1 flex items-center justify-center p-4">
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 min-h-0 flex items-center justify-center p-4">
         {currentImage && (
-          <div className="relative w-full max-w-4xl aspect-square">
-            <Image
+          <div className="relative max-w-full max-h-full flex items-center justify-center">
+            <img
               key={currentImage}
               src={currentImage}
               alt="Animation frame"
-              fill
-              style={{ objectFit: 'contain' }}
+              className="max-w-full max-h-full object-contain"
             />
             <div className="absolute bottom-4 left-4 bg-black/50 text-white text-sm px-2 py-1 rounded">
               {currentTimestamp}
