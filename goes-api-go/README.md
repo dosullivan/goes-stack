@@ -24,27 +24,66 @@ The following environment variables are required:
 
 ## API Usage
 The following API endpoints are available:
-- `/latest` - Returns the latest image available. Example:
+
+- `/latest` — Returns the latest image URL.
 ```shell
-> curl http://localhost:3000/latest
-{ "latest": "2024-08-23" }
+curl http://localhost:3000/latest
+# => { "imageUrl": "http://localhost:9000/.../some-latest-image.png" }
 ```
-- `/available-dates` - Returns a list of dates with available images. Example:
+
+- `/available-dates` — Returns a list of dates with available images.
 ```shell
-> curl http://localhost:3000/available-dates
-{ "availableDates": ["2024-08-23", "2024-08-22", "2024-08-21"] }
+curl http://localhost:3000/available-dates
+# => { "availableDates": ["2024-08-23", "2024-08-22", "2024-08-21"] }
 ```
-- `/archive/{date}` - Returns the image urls for a given date.Example:
+
+- `/archive/{date}` — Returns the image URLs for a given date (YYYY-MM-DD, CST-based selection).
 ```shell
-> curl http://localhost:3000/archive/2024-05-16
-{
-  "imageUrls": [
-    "http://localhost:9000/goes-16/false-color/fd/2024-05-16/OR_ABI-L2-CMIPF-M6CFC_G16_s20241371130206_e20241371139514_c20241371139566.png",
-    "http://localhost:9000/goes-16/false-color/fd/2024-05-16/OR_ABI-L2-CMIPF-M6CFC_G16_s20241371200206_e20241371209514_c20241371209572.png",
-    "http://localhost:9000/goes-16/false-color/fd/2024-05-16/OR_ABI-L2-CMIPF-M6CFC_G16_s20241371230206_e20241371239514_c20241371239566.png",
-    "http://localhost:9000/goes-16/false-color/fd/2024-05-16/OR_ABI-L2-CMIPF-M6CFC_G16_s20241372330204_e20241372339512_c20241372339564.png"
-  ]
-}
+curl http://localhost:3000/archive/2024-05-16
+# => {
+#   "imageUrls": [
+#     "http://localhost:9000/.../2024-05-16/....png",
+#     "http://localhost:9000/.../2024-05-16/....png"
+#   ]
+# }
+```
+
+- `/weather/products` — Returns the list of available weather product keys and metadata.
+```shell
+curl http://localhost:3000/weather/products
+# => { "products": [ { "key": "fd_color", "title": "GOES-19 Full Disk Color", "category": "goes19_fd" }, ... ] }
+```
+
+- `/weather/products/{product}` — Returns images for a product. Optional `date=YYYY-MM-DD` (UTC) query.
+```shell
+curl "http://localhost:3000/weather/products/fd_color"
+# or
+curl "http://localhost:3000/weather/products/fd_color?date=2024-08-23"
+# => { "product": "fd_color", "images": [ { "url": "http://localhost:9000/...png", "timestamp": "2024-08-23T12:34:56Z", "filename": "...png" } ], "count": 42 }
+```
+
+- `/emwin/text/categories` — Returns EMWIN text categories.
+```shell
+curl http://localhost:3000/emwin/text/categories
+# => { "categories": [ { "key": "weather_warnings", "title": "Weather Warnings & Watches" }, ... ] }
+```
+
+- `/emwin/text/files` — Returns EMWIN text files. Optional queries: `category`, `date=YYYY-MM-DD`, `station`. Limited to 100 items.
+```shell
+curl "http://localhost:3000/emwin/text/files?category=forecasts&date=2024-08-23"
+# => { "files": [ { "url": "http://localhost:9000/emwin/...TXT", "timestamp": "2024-08-23T01:23:45-05:00", "filename": "...TXT", "productCode": "ASUS41", "station": "KGYX" } ], "count": 12, "filters": { "category": "forecasts", "station": "", "date": "2024-08-23" } }
+```
+
+- `/emwin/text/content` — Returns content for a specific EMWIN text file. Requires `key` query with the object key.
+```shell
+curl "http://localhost:3000/emwin/text/content?key=emwin/2024-08-23/ABC_DEF_20240823120000_...TXT"
+# => { "objectKey": "emwin/2024-08-23/...TXT", "content": "...file contents..." }
+```
+
+- `/proxy/image` — Proxies an image from the MinIO/S3 base URL through this API. Requires `url` query.
+```shell
+curl "http://localhost:3000/proxy/image?url=http://localhost:9000/bucket/path/to/image.png" --output image.png
+# Streams the image through the API and saves it locally
 ```
 
 ## Deployment
