@@ -71,6 +71,7 @@ export default function Home() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [animationSpeed, setAnimationSpeed] = useState(500)
   const [compareImages, setCompareImages] = useState<string[]>([])
+  const [compareIndices, setCompareIndices] = useState<[number, number]>([0, 1])
   const [zoom, setZoom] = useState(1)
   const animationRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -209,6 +210,7 @@ export default function Home() {
         // For comparison mode, set first two images
         if (viewMode === 'compare' && chronologicalUrls.length > 1) {
           setCompareImages([chronologicalUrls[0], chronologicalUrls[1]])
+          setCompareIndices([0, 1])
         }
       } else {
         // No images available for this product
@@ -486,6 +488,7 @@ export default function Home() {
               setCurrentIndex(idx)
               setCurrentImage(image)
               setCurrentTimestamp(parseTimestamp(image))
+              setViewMode('single')  // Switch to single view when clicking an image
             }}
           >
             <Image
@@ -516,34 +519,90 @@ export default function Home() {
     </div>
   )
 
+  const handleCompareIndexChange = (imageIndex: number, value: number) => {
+    const newIndices: [number, number] = [...compareIndices] as [number, number]
+    newIndices[imageIndex] = value
+    setCompareIndices(newIndices)
+    
+    if (images[newIndices[0]] && images[newIndices[1]]) {
+      setCompareImages([images[newIndices[0]], images[newIndices[1]]])
+    }
+  }
+
   const renderCompareView = () => (
-    <div className="flex-1 flex gap-2 p-4 min-h-0">
-      {compareImages.length >= 2 ? (
+    <div className="flex-1 flex flex-col p-4 min-h-0">
+      {images.length >= 2 ? (
         <>
-          <div className="flex-1 min-h-0 flex items-center justify-center relative border rounded-lg overflow-hidden">
-            <img
-              src={compareImages[0]}
-              alt="Compare image 1"
-              className="max-w-full max-h-full object-contain"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
-              {parseTimestamp(compareImages[0])}
+          {/* Selection controls */}
+          <div className="flex gap-4 mb-4">
+            <div className="flex-1 flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Left image:</label>
+              <select
+                value={compareIndices[0]}
+                onChange={(e) => handleCompareIndexChange(0, parseInt(e.target.value))}
+                className="flex-1 px-3 py-1 text-sm border rounded-md bg-background"
+              >
+                {images.map((_, idx) => (
+                  <option key={idx} value={idx}>
+                    {parseTimestamp(images[idx])}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 flex items-center gap-2">
+              <label className="text-sm font-medium whitespace-nowrap">Right image:</label>
+              <select
+                value={compareIndices[1]}
+                onChange={(e) => handleCompareIndexChange(1, parseInt(e.target.value))}
+                className="flex-1 px-3 py-1 text-sm border rounded-md bg-background"
+              >
+                {images.map((_, idx) => (
+                  <option key={idx} value={idx}>
+                    {parseTimestamp(images[idx])}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-          <div className="flex-1 min-h-0 flex items-center justify-center relative border rounded-lg overflow-hidden">
-            <img
-              src={compareImages[1]}
-              alt="Compare image 2"
-              className="max-w-full max-h-full object-contain"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
-              {parseTimestamp(compareImages[1])}
-            </div>
+          
+          {/* Image comparison */}
+          <div className="flex-1 flex gap-2 min-h-0">
+            {compareImages.length >= 2 ? (
+              <>
+                <div className="flex-1 min-h-0 flex items-center justify-center relative border rounded-lg overflow-hidden">
+                  <img
+                    src={compareImages[0]}
+                    alt="Compare image 1"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
+                    {parseTimestamp(compareImages[0])}
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0 flex items-center justify-center relative border rounded-lg overflow-hidden">
+                  <img
+                    src={compareImages[1]}
+                    alt="Compare image 2"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 text-center">
+                    {parseTimestamp(compareImages[1])}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground">
+                Loading comparison images...
+              </div>
+            )}
           </div>
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
-          Select images to compare
+          <div className="text-center">
+            <p className="text-lg mb-2">Not enough images to compare</p>
+            <p className="text-sm">At least 2 images are required for comparison mode</p>
+          </div>
         </div>
       )}
     </div>
@@ -551,9 +610,9 @@ export default function Home() {
 
   const renderAnimationView = () => (
     <div className="flex-1 flex flex-col min-h-0">
-      <div className="flex-1 min-h-0 flex items-center justify-center p-4">
+      <div className="flex-1 min-h-0 flex items-center justify-center p-4 overflow-hidden">
         {currentImage && (
-          <div className="relative max-w-full max-h-full flex items-center justify-center">
+          <div className="relative flex-1 min-h-0 max-h-full flex items-center justify-center">
             <img
               key={currentImage}
               src={currentImage}
