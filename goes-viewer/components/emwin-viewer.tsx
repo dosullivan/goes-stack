@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { fetchEmwinCategories, fetchEmwinFiles, fetchEmwinContent } from '@/lib/api'
+import { fetchEmwinCategories, fetchEmwinFiles, fetchEmwinContent, fetchWeatherOffices } from '@/lib/api'
 import { format } from 'date-fns'
 import { FileText, Calendar, MapPin, RefreshCw } from 'lucide-react'
 
@@ -31,6 +31,8 @@ interface EmwinViewerProps {
 export function EmwinViewer({ selectedDate: propSelectedDate }: EmwinViewerProps) {
   const [categories, setCategories] = useState<any[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [offices, setOffices] = useState<any[]>([])
+  const [selectedOffice, setSelectedOffice] = useState<string>('')
   const [files, setFiles] = useState<EmwinFile[]>([])
   const [selectedFile, setSelectedFile] = useState<EmwinFile | null>(null)
   const [fileContent, setFileContent] = useState<string>('')
@@ -39,6 +41,7 @@ export function EmwinViewer({ selectedDate: propSelectedDate }: EmwinViewerProps
 
   useEffect(() => {
     loadCategories()
+    loadOffices()
   }, [])
 
   useEffect(() => {
@@ -59,17 +62,26 @@ export function EmwinViewer({ selectedDate: propSelectedDate }: EmwinViewerProps
     }
   }
 
+  const loadOffices = async () => {
+    try {
+      const data = await fetchWeatherOffices()
+      setOffices(data.offices || [])
+    } catch (error) {
+      console.error('Error loading weather offices:', error)
+    }
+  }
+
   useEffect(() => {
     if (selectedCategory) {
       loadFiles()
     }
-  }, [selectedCategory, selectedDate])
+  }, [selectedCategory, selectedDate, selectedOffice])
 
   const loadFiles = async () => {
     setIsLoading(true)
     try {
-      console.log('Loading files for category:', selectedCategory, 'date:', selectedDate)
-      const data = await fetchEmwinFiles(selectedCategory, selectedDate)
+      console.log('Loading files for category:', selectedCategory, 'date:', selectedDate, 'office:', selectedOffice)
+      const data = await fetchEmwinFiles(selectedCategory, selectedDate, undefined, selectedOffice || undefined)
       console.log('EMWIN files response:', data)
       const fileList = data.files || []
       setFiles(fileList)
@@ -173,6 +185,20 @@ export function EmwinViewer({ selectedDate: propSelectedDate }: EmwinViewerProps
             {categories.map(category => (
               <SelectItem key={category.key} value={category.key}>
                 {category.title || category.key}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedOffice || "all"} onValueChange={(value) => setSelectedOffice(value === "all" ? "" : value)}>
+          <SelectTrigger className="w-64">
+            <SelectValue placeholder="All offices" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All offices</SelectItem>
+            {offices.map(office => (
+              <SelectItem key={office.stationId} value={office.stationId}>
+                {office.city}, {office.state} ({office.stationId})
               </SelectItem>
             ))}
           </SelectContent>

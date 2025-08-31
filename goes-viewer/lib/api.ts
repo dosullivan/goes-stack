@@ -115,7 +115,7 @@ export async function fetchEmwinCategories() {
   return response.json();
 }
 
-export async function fetchEmwinFiles(category: string, date?: Date, station?: string) {
+export async function fetchEmwinFiles(category: string, date?: Date, station?: string, office?: string) {
   const params = new URLSearchParams();
   params.append('category', category);
   
@@ -128,9 +128,21 @@ export async function fetchEmwinFiles(category: string, date?: Date, station?: s
     params.append('station', station);
   }
   
+  if (office) {
+    params.append('office', office);
+  }
+  
   const response = await fetch(`${API_BASE_URL}/emwin/text/files?${params}`);
   if (!response.ok) {
     throw new Error('Failed to fetch EMWIN files');
+  }
+  return response.json();
+}
+
+export async function fetchWeatherOffices() {
+  const response = await fetch(`${API_BASE_URL}/weather/offices`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch weather offices');
   }
   return response.json();
 }
