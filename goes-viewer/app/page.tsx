@@ -287,6 +287,7 @@ export default function Home() {
       setCurrentIndex(newIndex)
       setCurrentImage(images[newIndex])
       setCurrentTimestamp(parseTimestamp(images[newIndex]))
+      // Zoom and pan are preserved to compare the same area across frames
     }
   }
 
@@ -297,6 +298,7 @@ export default function Home() {
       setCurrentIndex(newIndex)
       setCurrentImage(images[newIndex])
       setCurrentTimestamp(parseTimestamp(images[newIndex]))
+      // Zoom and pan are preserved to compare the same area across frames
     }
   }
 
@@ -343,6 +345,9 @@ export default function Home() {
     setCurrentImage(images[0])
     setCurrentTimestamp(parseTimestamp(images[0]))
     setIsAnimating(false)
+    // Also reset zoom and pan when resetting to first frame
+    setZoom(1)
+    setPanOffset({ x: 0, y: 0 })
   }
 
   // Keyboard shortcuts
@@ -373,15 +378,28 @@ export default function Home() {
         case '4':
           setViewMode('animation')
           break
-        case 's':
+        case 'b':
           setSidebarOpen(!sidebarOpen)
+          break
+        case '+':
+        case '=':
+          // + key (with or without shift)
+          if (viewMode === 'single') {
+            setZoom(Math.min(3, zoom + 0.25))
+          }
+          break
+        case '-':
+          // - key for zoom out
+          if (viewMode === 'single') {
+            setZoom(Math.max(0.5, zoom - 0.25))
+          }
           break
       }
     }
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentIndex, images, viewMode, sidebarOpen])
+  }, [currentIndex, images, viewMode, sidebarOpen, zoom])
 
   // Pan and zoom handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -439,16 +457,19 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [zoom, viewMode])
 
-  // Reset pan when zoom changes to 1 or when image changes
+  // Reset pan when zoom changes to 1
   useEffect(() => {
     if (zoom === 1) {
       setPanOffset({ x: 0, y: 0 })
     }
   }, [zoom])
 
+  // Reset zoom and pan only when switching products or dates
+  // This preserves zoom/pan when navigating between frames for easier comparison
   useEffect(() => {
     setPanOffset({ x: 0, y: 0 })
-  }, [currentImage])
+    setZoom(1)
+  }, [selectedProduct, currentDate])
 
   const renderSingleView = () => (
     <div className="flex-1 flex flex-col items-center overflow-hidden">
@@ -827,7 +848,7 @@ export default function Home() {
                   <li>Himawari satellite support</li>
                 </ul>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Press 'S' to toggle sidebar, 1-4 for view modes, arrow keys to navigate
+                  Hotkeys: B (sidebar), 1-4 (views), ←→ (navigate), +/- (zoom), WASD (pan)
                 </p>
               </div>
             </PopoverContent>
