@@ -1,0 +1,124 @@
+City,State,CWA,FullStaId
+Albuquerque,New Mexico,ABQ,KABQ
+Aberdeen,South Dakota,ABR,KABR
+Anchorage,Alaska,AFC,PAFC
+Fairbanks,Alaska,AFG,PAFG
+Juneau,Alaska,AJK,PAJK
+Wakefield,Virginia,AKQ,KAKQ
+Albany,New York,ALY,KALY
+Amarillo,Texas,AMA,KAMA
+Gaylord,Michigan,APX,KAPX
+La Crosse,Wisconsin,ARX,KARX
+Binghamton,New York,BGM,KBGM
+Bismarck,North Dakota,BIS,KBIS
+Birmingham,Alabama,BMX,KBMX
+Boise,Idaho,BOI,KBOI
+Denver,Colorado,BOU,KBOU
+Taunton,Massachusetts,BOX,KBOX
+Brownsville,Texas,BRO,KBRO
+Burlington,Vermont,BTV,KBTV
+Buffalo,New York,BUF,KBUF
+Billings,Montana,BYZ,KBYZ
+Columbia,South Carolina,CAE,KCAE
+Caribou,Maine,CAR,KCAR
+Charleston,South Carolina,CHS,KCHS
+Cleveland,Ohio,CLE,KCLE
+Corpus Christi,Texas,CRP,KCRP
+State College,Pennsylvania,CTP,KCTP
+Cheyenne,Wyoming,CYS,KCYS
+Dodge City,Kansas,DDC,KDDC
+Duluth,Minnesota,DLH,KDLH
+Des Moines,Iowa,DMX,KDMX
+Detroit/Pontiac,Michigan,DTX,KDTX
+Quad Cities,Illinois,DVN,KDVN
+Kansas City/Pleasant Hill,Missouri,EAX,KEAX
+Eureka,California,EKA,KEKA
+El Paso TX/Santa Teresa NM,New Mexico,EPZ,KEPZ
+Austin/San Antonio,Texas,EWX,KEWX
+Peachtree City,Georgia,FFC,KFFC
+Grand Forks,North Dakota,FGF,KFGF
+Flagstaff,Arizona,FGZ,KFGZ
+Sioux Falls,South Dakota,FSD,KFSD
+Fort Worth,Texas,FWD,KFWD
+Glasgow,Montana,GGW,KGGW
+Hastings,Nebraska,GID,KGID
+Grand Junction,Colorado,GJT,KGJT
+Goodland,Kansas,GLD,KGLD
+Green Bay,Wisconsin,GRB,KGRB
+Grand Rapids,Michigan,GRR,KGRR
+Greenville-Spartanburg,South Carolina,GSP,KGSP
+Tiyan,Guam,GUM,PGUM
+Gray,Maine,GYX,KGYX
+Honolulu,Hawaii,HFO,PHFO
+Houston/Galveston,Texas,HGX,KHGX
+Hanford,California,HNX,KHNX
+Huntsville,Alabama,HUN,KHUN
+Wichita,Kansas,ICT,KICT
+Wilmington,North Carolina,ILM,KILM
+Wilmington,Ohio,ILN,KILN
+Lincoln,Illinois,ILX,KILX
+Indianapolis,Indiana,IND,KIND
+Northern Indiana,Indiana,IWX,KIWX
+Jackson,Mississippi,JAN,KJAN
+Jacksonville,Florida,JAX,KJAX
+Jackson,Kentucky,JKL,KJKL
+Key West,Florida,KEY,KKEY
+North Platte,Nebraska,LBF,KLBF
+Lake Charles,Louisiana,LCH,KLCH
+New Orleans,Louisiana,LIX,KLIX
+Elko,Nevada,LKN,KLKN
+Louisville,Kentucky,LMK,KLMK
+Chicago,Illinois,LOT,KLOT
+Los Angeles/Oxnard,California,LOX,KLOX
+St Louis,Missouri,LSX,KLSX
+Lubbock,Texas,LUB,KLUB
+Baltimore MD/Washington,District of Columbia,LWX,KLWX
+Little Rock,Arkansas,LZK,KLZK
+Midland/Odessa,Texas,MAF,KMAF
+Memphis,Tennessee,MEG,KMEG
+Miami,Florida,MFL,KMFL
+Medford,Oregon,MFR,KMFR
+Newport/Morehead City,North Carolina,MHX,KMHX
+Milwaukee/Sullivan,Wisconsin,MKX,KMKX
+Melbourne,Florida,MLB,KMLB
+Mobile,Alabama,MOB,KMOB
+Twin Cities/Chanhassen,Minnesota,MPX,KMPX
+Marquette,Michigan,MQT,KMQT
+Morristown,Tennessee,MRX,KMRX
+Missoula,Montana,MSO,KMSO
+San Francisco,California,MTR,KMTR
+Omaha/Valley,Nebraska,OAX,KOAX
+Nashville,Tennessee,OHX,KOHX
+Upton,New York,OKX,KOKX
+Spokane,Washington,OTX,KOTX
+Norman,Oklahoma,OUN,KOUN
+Paducah,Kentucky,PAH,KPAH
+Pittsburgh,Pennsylvania,PBZ,KPBZ
+Pendleton,Oregon,PDT,KPDT
+Mount Holly,New Jersey,PHI,KPHI
+Pocatello,Idaho,PIH,KPIH
+Pago Pago,American Samoa,PPG,PPPG
+Portland,Oregon,PQR,KPQR
+Phoenix,Arizona,PSR,KPSR
+Pueblo,Colorado,PUB,KPUB
+Raleigh,North Carolina,RAH,KRAH
+Reno,Nevada,REV,KREV
+Riverton,Wyoming,RIW,KRIW
+Charleston,West Virginia,RLX,KRLX
+Blacksburg,Virginia,RNK,KRNK
+Seattle,Washington,SEW,KSEW
+Springfield,Missouri,SGF,KSGF
+San Diego,California,SGX,KSGX
+Shreveport,Louisiana,SHV,KSHV
+San Angelo,Texas,SJT,KSJT
+San Juan,Puerto Rico,SJU,TJSJ
+Salt Lake City,Utah,SLC,KSLC
+Sacramento,California,STO,KSTO
+Tallahassee,Florida,TAE,KTAE
+Tampa Bay Ruskin,Florida,TBW,KTBW
+Great Falls,Montana,TFX,KTFX
+Topeka,Kansas,TOP,KTOP
+Tulsa,Oklahoma,TSA,KTSA
+Tucson,Arizona,TWC,KTWC
+Rapid City,South Dakota,UNR,KUNR
+Las Vegas,Nevada,VEF,KVEF

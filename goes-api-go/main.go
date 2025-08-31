@@ -60,6 +60,9 @@ func main() {
 	router.GET("/emwin/text/categories", handlers.GetEMWINTextCategories())
 	router.GET("/emwin/text/files", handlers.GetEMWINTextFiles(s3Client))
 	router.GET("/emwin/text/content", handlers.GetEMWINTextContent(s3Client))
+	
+	// Weather offices API
+	router.GET("/weather/offices", handlers.GetWeatherOffices())
 
 	router.GET("/proxy/image", func(c *gin.Context) {
 		imageUrl := c.Query("url")

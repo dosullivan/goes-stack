@@ -21,41 +21,75 @@ func GetAvailableDates(s3Client *s3.S3Client) gin.HandlerFunc {
 			return
 		}
 
-		prefix := "false-color/fd/"
+		// Just check one representative product path that's likely to have data
+		// This is much faster than scanning all products
+		prefix := "goes19/fd/fc/" // GOES-19 Full Disk Color - usually has good coverage
+		
 		ctx := context.Background()
 
 		// Create a map to store dates by their CST representation
 		datesSet := make(map[string]struct{})
 
+		// List objects but not recursively - just get the date directories
 		objectCh := s3Client.Client.ListObjects(ctx, s3Client.BucketName, minio.ListObjectsOptions{
 			Prefix:    prefix,
-			Recursive: true,
+			Recursive: false,
 		})
 
 		for object := range objectCh {
 			if object.Err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": object.Err.Error()})
-				return
-			}
-
-			// Skip non-image files
-			if !strings.HasSuffix(strings.ToLower(object.Key), ".png") &&
-				!strings.HasSuffix(strings.ToLower(object.Key), ".jpg") {
 				continue
 			}
 
-			// Extract UTC timestamp from the object key
-			utcTime, err := extractTimestamp(object.Key)
-			if err != nil {
-				continue // Skip files that don't match our expected format
+			// Extract date from the directory structure
+			// Expected format: goes19/fd/fc/2024-12-25/
+			parts := strings.Split(object.Key, "/")
+			if len(parts) >= 4 {
+				dateStr := parts[3]
+				// Validate it's a date format
+				if len(dateStr) == 10 && strings.Count(dateStr, "-") == 2 {
+					datesSet[dateStr] = struct{}{}
+				}
 			}
+		}
 
-			// Convert UTC time to CST
-			cstTime := utcTime.In(cstLocation)
+		// If we didn't find dates using directory listing, fall back to checking files
+		if len(datesSet) == 0 {
+			objectCh = s3Client.Client.ListObjects(ctx, s3Client.BucketName, minio.ListObjectsOptions{
+				Prefix:    prefix,
+				Recursive: true,
+			})
 
-			// Store the CST date
-			cstDate := cstTime.Format("2006-01-02")
-			datesSet[cstDate] = struct{}{}
+			for object := range objectCh {
+				if object.Err != nil {
+					continue
+				}
+
+				// Skip non-image files
+				if !strings.HasSuffix(strings.ToLower(object.Key), ".png") &&
+					!strings.HasSuffix(strings.ToLower(object.Key), ".jpg") &&
+					!strings.HasSuffix(strings.ToLower(object.Key), ".gif") {
+					continue
+				}
+
+				// Extract UTC timestamp from the object key
+				utcTime, err := extractTimestamp(object.Key)
+				if err != nil {
+					continue
+				}
+
+				// Convert UTC time to CST
+				cstTime := utcTime.In(cstLocation)
+
+				// Store the CST date
+				cstDate := cstTime.Format("2006-01-02")
+				datesSet[cstDate] = struct{}{}
+				
+				// Limit to recent dates to avoid scanning too many files
+				if len(datesSet) >= 30 {
+					break
+				}
+			}
 		}
 
 		// Convert the set to a sorted slice
