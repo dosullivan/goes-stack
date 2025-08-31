@@ -145,10 +145,12 @@ export default function Home() {
                   if (img.url) return img.url
                   return img
                 })
-                setImages(urls)
+                // Reverse for chronological order (oldest to newest) for animations
+                const chronologicalUrls = [...urls].reverse()
+                setImages(chronologicalUrls)
                 setCurrentIndex(0)
-                setCurrentImage(urls[0])
-                setCurrentTimestamp(parseTimestamp(urls[0]))
+                setCurrentImage(chronologicalUrls[0])
+                setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
               }
             } catch (e) {
               console.log('No images for default product')
@@ -197,14 +199,16 @@ export default function Home() {
           if (img.url) return img.url
           return img
         })
-        setImages(urls)
+        // Reverse for chronological order (oldest to newest) for animations
+        const chronologicalUrls = [...urls].reverse()
+        setImages(chronologicalUrls)
         setCurrentIndex(0)
-        setCurrentImage(urls[0])
-        setCurrentTimestamp(parseTimestamp(urls[0]))
+        setCurrentImage(chronologicalUrls[0])
+        setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
         
         // For comparison mode, set first two images
-        if (viewMode === 'compare' && urls.length > 1) {
-          setCompareImages([urls[0], urls[1]])
+        if (viewMode === 'compare' && chronologicalUrls.length > 1) {
+          setCompareImages([chronologicalUrls[0], chronologicalUrls[1]])
         }
       } else {
         // No images available for this product
@@ -241,10 +245,12 @@ export default function Home() {
             if (img.url) return img.url
             return img
           })
-          setImages(urls)
+          // Reverse for chronological order (oldest to newest) for animations
+          const chronologicalUrls = [...urls].reverse()
+          setImages(chronologicalUrls)
           setCurrentIndex(0)
-          setCurrentImage(urls[0])
-          setCurrentTimestamp(parseTimestamp(urls[0]))
+          setCurrentImage(chronologicalUrls[0])
+          setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
         }
       } else {
         const imageUrls = await fetchImagesByDate(date)
@@ -255,10 +261,12 @@ export default function Home() {
           if (img.url) return img.url
           return img
         })
-        setImages(urls)
+        // Reverse for chronological order (oldest to newest) for animations
+        const chronologicalUrls = [...urls].reverse()
+        setImages(chronologicalUrls)
         setCurrentIndex(0)
-        setCurrentImage(urls[0])
-        setCurrentTimestamp(parseTimestamp(urls[0]))
+        setCurrentImage(chronologicalUrls[0])
+        setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
       }
     } catch (error) {
       console.error('Error fetching images for date:', error)
