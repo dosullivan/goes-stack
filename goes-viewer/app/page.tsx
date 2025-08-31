@@ -73,7 +73,11 @@ export default function Home() {
   const [compareImages, setCompareImages] = useState<string[]>([])
   const [compareIndices, setCompareIndices] = useState<[number, number]>([0, 1])
   const [zoom, setZoom] = useState(1)
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const animationRef = useRef<NodeJS.Timeout | null>(null)
+  const imageContainerRef = useRef<HTMLDivElement>(null)
 
   // Load initial data and weather products
   useEffect(() => {
@@ -379,14 +383,94 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyPress)
   }, [currentIndex, images, viewMode, sidebarOpen])
 
+  // Pan and zoom handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (zoom > 1) {
+      setIsDragging(true)
+      setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y })
+      e.preventDefault()
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && zoom > 1) {
+      setPanOffset({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      })
+    }
+  }
+
+  const handleMouseUp = () => {
+    setIsDragging(false)
+  }
+
+  const handleMouseLeave = () => {
+    setIsDragging(false)
+  }
+
+  // Keyboard navigation for panning - using WASD keys to avoid arrow key conflicts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (zoom > 1 && viewMode === 'single') {
+        const panSpeed = 50
+        switch(e.key.toLowerCase()) {
+          case 'w':
+            setPanOffset(prev => ({ ...prev, y: prev.y + panSpeed }))
+            e.preventDefault()
+            break
+          case 's':
+            setPanOffset(prev => ({ ...prev, y: prev.y - panSpeed }))
+            e.preventDefault()
+            break
+          case 'a':
+            setPanOffset(prev => ({ ...prev, x: prev.x + panSpeed }))
+            e.preventDefault()
+            break
+          case 'd':
+            setPanOffset(prev => ({ ...prev, x: prev.x - panSpeed }))
+            e.preventDefault()
+            break
+        }
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [zoom, viewMode])
+
+  // Reset pan when zoom changes to 1 or when image changes
+  useEffect(() => {
+    if (zoom === 1) {
+      setPanOffset({ x: 0, y: 0 })
+    }
+  }, [zoom])
+
+  useEffect(() => {
+    setPanOffset({ x: 0, y: 0 })
+  }, [currentImage])
+
   const renderSingleView = () => (
     <div className="flex-1 flex flex-col items-center overflow-hidden">
       {currentImage ? (
         <div className="w-full flex-1 flex flex-col p-2 min-h-0">
-          <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden">
+          <div 
+            ref={imageContainerRef}
+            className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseLeave}
+            style={{ cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+          >
             {isImageLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
                 <div className="text-center">Loading image...</div>
+              </div>
+            )}
+            {zoom > 1 && (
+              <div className="absolute top-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded z-10">
+                Drag or use WASD keys to pan
               </div>
             )}
             <img
@@ -395,9 +479,13 @@ export default function Home() {
               alt="Satellite image"
               className="max-w-full max-h-full object-contain"
               style={{ 
-                transform: `scale(${zoom})`
+                transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+                transition: isDragging ? 'none' : 'transform 0.2s',
+                userSelect: 'none',
+                pointerEvents: 'none'
               }}
               onLoad={() => setIsImageLoading(false)}
+              draggable={false}
             />
           </div>
           <div className="text-center mt-2 text-sm text-muted-foreground">
@@ -443,7 +531,10 @@ export default function Home() {
           <Button
             size="icon"
             variant="outline"
-            onClick={() => setZoom(1)}
+            onClick={() => {
+              setZoom(1)
+              setPanOffset({ x: 0, y: 0 })
+            }}
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
