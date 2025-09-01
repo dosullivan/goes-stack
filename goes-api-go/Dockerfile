@@ -16,6 +16,7 @@ RUN apk add --no-cache tzdata
 RUN apk --no-cache add ca-certificates
 
 COPY --from=builder /app/goes-api /app/goes-api
+COPY office_names_and_codes.csv /app/office_names_and_codes.csv
 
 EXPOSE 3000
 
