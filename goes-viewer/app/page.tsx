@@ -527,59 +527,56 @@ export default function Home() {
       )}
       
       {currentImage && (
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mb-2 px-2">
-        <div className="flex gap-2 order-2 sm:order-1">
-          <Button 
-            className="sm:w-32" 
-            size="sm"
-            onClick={handlePrevious} 
-            disabled={currentIndex === 0}
-          >
-            <ChevronLeft className="sm:mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Previous</span>
-          </Button>
-        </div>
-        
-        <div className="flex gap-2 order-1 sm:order-2">
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
-            disabled={zoom <= 0.5}
-          >
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => {
-              setZoom(1)
-              setPanOffset({ x: 0, y: 0 })
-            }}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={() => setZoom(Math.min(3, zoom + 0.25))}
-            disabled={zoom >= 3}
-          >
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="flex gap-2 order-3">
-          <Button 
-            className="sm:w-32" 
-            size="sm"
-            onClick={handleNext} 
-            disabled={currentIndex === images.length - 1}
-          >
-            <span className="hidden sm:inline">Next</span>
-            <ChevronRight className="sm:ml-2 h-4 w-4" />
-          </Button>
-        </div>
+        <div className="flex justify-center items-center gap-4 mb-2 px-2">
+          {/* Navigation buttons */}
+          <div className="flex gap-2">
+            <Button 
+              size="icon"
+              variant="outline"
+              onClick={handlePrevious} 
+              disabled={currentIndex === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button 
+              size="icon"
+              variant="outline"
+              onClick={handleNext} 
+              disabled={currentIndex === images.length - 1}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Zoom controls */}
+          <div className="flex gap-2">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => setZoom(Math.max(0.5, zoom - 0.25))}
+              disabled={zoom <= 0.5}
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => {
+                setZoom(1)
+                setPanOffset({ x: 0, y: 0 })
+              }}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={() => setZoom(Math.min(3, zoom + 0.25))}
+              disabled={zoom >= 3}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
     </div>
@@ -756,9 +753,9 @@ export default function Home() {
 
 
   return (
-    <div className="h-screen w-full flex flex-col">
+    <div className="h-full w-full flex flex-col">
       {/* Header */}
-      <div className="border-b px-4 py-2 flex items-center justify-between">
+      <div className="border-b px-4 py-2 flex items-center justify-between relative z-30">
         <div className="flex items-center gap-2">
           <Button
             size="icon"
@@ -864,7 +861,7 @@ export default function Home() {
             {/* Mobile sidebar backdrop */}
             {sidebarOpen && (
               <div 
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                className="fixed inset-0 top-[57px] bg-black/50 z-40 lg:hidden"
                 onClick={() => setSidebarOpen(false)}
               />
             )}
@@ -872,7 +869,7 @@ export default function Home() {
             {/* Sidebar */}
             <div className={cn(
               "bg-background border-r bg-muted/10 transition-all duration-300",
-              "fixed lg:relative inset-y-0 left-0 z-50 lg:z-0",
+              "fixed lg:relative top-[57px] lg:top-0 bottom-0 left-0 z-50 lg:z-0",
               sidebarOpen ? "w-80" : "w-0"
             )}>
               {sidebarOpen && (

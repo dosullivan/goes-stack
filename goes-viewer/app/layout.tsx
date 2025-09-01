@@ -28,9 +28,11 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="goes-viewer-theme"
         >
-          <main className="h-full container mx-auto px-4">
-            {children}
-          </main>
+          <div className="min-h-screen p-2 bg-background">
+            <main className="h-[calc(100vh-1rem)] border-2 border-white overflow-hidden bg-background">
+              {children}
+            </main>
+          </div>
         </ThemeProvider>
       </body>
     </html>
