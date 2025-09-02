@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { ChevronRight, ChevronDown, Satellite, Cloud, Radar, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -92,7 +91,7 @@ export function ProductSelector({ onProductSelect, selectedProduct, products }: 
     return product.name
   }
 
-  const getProductDescription = (product: Product): string | null => {
+  const getProductDescription = (): string | null => {
     // Return null to use backend descriptions instead of our manual mapping
     return null
   }
@@ -132,7 +131,7 @@ export function ProductSelector({ onProductSelect, selectedProduct, products }: 
               {group.expanded && (
                 <div className="ml-4 mt-1">
                   {group.products.map(product => {
-                    const description = getProductDescription(product)
+                    const description = getProductDescription()
                     return (
                       <Button
                         key={product.id}

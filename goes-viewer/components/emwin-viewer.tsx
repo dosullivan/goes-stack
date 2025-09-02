@@ -1,7 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -30,10 +29,21 @@ interface EmwinViewerProps {
   setSidebarOpen?: (open: boolean) => void
 }
 
+interface Category {
+  key: string
+  title?: string
+}
+
+interface Office {
+  stationId: string
+  city: string
+  state: string
+}
+
 export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true, setSidebarOpen }: EmwinViewerProps) {
-  const [categories, setCategories] = useState<any[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
-  const [offices, setOffices] = useState<any[]>([])
+  const [offices, setOffices] = useState<Office[]>([])
   const [selectedOffice, setSelectedOffice] = useState<string>('')
   const [files, setFiles] = useState<EmwinFile[]>([])
   const [selectedFile, setSelectedFile] = useState<EmwinFile | null>(null)
@@ -107,13 +117,7 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
     }
   }
 
-  useEffect(() => {
-    if (selectedCategory) {
-      loadFiles()
-    }
-  }, [selectedCategory, selectedDate, selectedOffice])
-
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     setIsLoading(true)
     try {
       console.log('Loading files for category:', selectedCategory, 'date:', selectedDate, 'office:', selectedOffice)
@@ -130,7 +134,13 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [selectedCategory, selectedDate, selectedOffice])
+
+  useEffect(() => {
+    if (selectedCategory) {
+      loadFiles()
+    }
+  }, [selectedCategory, selectedDate, selectedOffice, loadFiles])
 
   const loadFileContent = async (file: EmwinFile) => {
     setSelectedFile(file)
@@ -183,7 +193,7 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
         if (!isNaN(date.getTime())) {
           time = format(date, 'MMM dd, HH:mm')
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, try extracting from filename
         const match = file.filename.match(/(\d{14})/)
         if (match) {
@@ -197,7 +207,7 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
             if (!isNaN(date.getTime())) {
               time = format(date, 'MMM dd, HH:mm')
             }
-          } catch (e2) {
+          } catch {
             // Keep as 'Unknown'
           }
         }

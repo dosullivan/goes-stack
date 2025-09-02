@@ -16,7 +16,6 @@ import {
   FileQuestion,
   Menu,
   X,
-  Download,
   ZoomIn,
   ZoomOut,
   RefreshCw,
@@ -27,7 +26,6 @@ import {
   FileText
 } from 'lucide-react'
 import { 
-  fetchLatestImage, 
   fetchAvailableDates, 
   fetchImagesByDate, 
   fetchWeatherProducts,
@@ -39,7 +37,6 @@ import { format } from 'date-fns'
 import { ProductSelector } from '@/components/product-selector'
 import { ViewModeSelector } from '@/components/view-mode-selector'
 import { AnimationControls } from '@/components/animation-controls'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Link from 'next/link'
 
 type ViewMode = 'single' | 'grid' | 'compare' | 'animation'
@@ -51,6 +48,8 @@ interface WeatherProduct {
   satellite?: string
   region?: string
   channel?: string
+  key?: string
+  title?: string
 }
 
 export default function Home() {
@@ -96,7 +95,7 @@ export default function Home() {
         setAvailableDates(dates.availableDates)
         
         // Parse and organize products
-        const parsedProducts: WeatherProduct[] = products.products ? products.products.map((p: any) => {
+        const parsedProducts: WeatherProduct[] = products.products ? products.products.map((p: WeatherProduct) => {
           // Extract satellite, region, and channel from key if present
           let satellite, region, channel
           if (p.key) {
@@ -151,7 +150,7 @@ export default function Home() {
               const imageArray = productImages.imageUrls || productImages.images || []
               if (imageArray.length > 0) {
                 // Convert image objects to URLs if needed
-                const urls = imageArray.map((img: any) => {
+                const urls = imageArray.map((img: string | {url?: string}) => {
                   if (typeof img === 'string') return img
                   if (img.url) return img.url
                   return img
@@ -163,7 +162,7 @@ export default function Home() {
                 setCurrentImage(chronologicalUrls[0])
                 setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
               }
-            } catch (e) {
+            } catch {
               console.log('No images for default product')
             }
           }
@@ -275,7 +274,7 @@ export default function Home() {
       
       if (imageArray && imageArray.length > 0) {
         // Convert image objects to URLs if needed
-        const urls = imageArray.map((img: any) => {
+        const urls = imageArray.map((img: string | {url?: string}) => {
           if (typeof img === 'string') return img
           if (img.url) return img.url
           return img
@@ -322,7 +321,7 @@ export default function Home() {
         const imageArray = productImages.imageUrls || productImages.images || []
         if (imageArray && imageArray.length > 0) {
           // Convert image objects to URLs if needed
-          const urls = imageArray.map((img: any) => {
+          const urls = imageArray.map((img: string | {url?: string}) => {
             if (typeof img === 'string') return img
             if (img.url) return img.url
             return img
@@ -338,7 +337,7 @@ export default function Home() {
         const imageUrls = await fetchImagesByDate(date)
         const imageArray = imageUrls.imageUrls || imageUrls.images || []
         // Convert image objects to URLs if needed
-        const urls = imageArray.map((img: any) => {
+        const urls = imageArray.map((img: string | {url?: string}) => {
           if (typeof img === 'string') return img
           if (img.url) return img.url
           return img
@@ -356,7 +355,7 @@ export default function Home() {
   }
 
   // Navigation handlers
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
       setIsImageLoading(true)
       const newIndex = currentIndex - 1
@@ -365,9 +364,9 @@ export default function Home() {
       setCurrentTimestamp(parseTimestamp(images[newIndex]))
       // Zoom and pan are preserved to compare the same area across frames
     }
-  }
+  }, [currentIndex, images])
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIndex < images.length - 1) {
       setIsImageLoading(true)
       const newIndex = currentIndex + 1
@@ -376,12 +375,12 @@ export default function Home() {
       setCurrentTimestamp(parseTimestamp(images[newIndex]))
       // Zoom and pan are preserved to compare the same area across frames
     }
-  }
+  }, [currentIndex, images])
 
   // Animation handlers
-  const handlePlayPause = () => {
+  const handlePlayPause = useCallback(() => {
     setIsAnimating(!isAnimating)
-  }
+  }, [isAnimating])
 
   useEffect(() => {
     if (isAnimating && viewMode === 'animation') {
