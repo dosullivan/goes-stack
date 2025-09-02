@@ -206,8 +206,8 @@ func getProductImagesForDateUTC(ctx context.Context, client *minio.Client, bucke
 			continue
 		}
 
-		// Use proxied URL instead of direct MinIO URL
-		proxiedURL := "/proxy/image?url=" + url.QueryEscape(baseURL + object.Key)
+		// Use proxied URL that will work with Next.js API routes
+		proxiedURL := "/api/proxy/image?url=" + url.QueryEscape(baseURL + object.Key)
 		images = append(images, ProductImage{
 			URL:       proxiedURL,
 			Timestamp: utcTime, // Keep in UTC
@@ -259,8 +259,8 @@ func getRecentProductImagesUTC(ctx context.Context, client *minio.Client, bucket
 				continue
 			}
 
-			// Use proxied URL instead of direct MinIO URL
-			proxiedURL := "/proxy/image?url=" + url.QueryEscape(baseURL + object.Key)
+			// Use proxied URL that will work with Next.js API routes
+			proxiedURL := "/api/proxy/image?url=" + url.QueryEscape(baseURL + object.Key)
 			images = append(images, ProductImage{
 				URL:       proxiedURL,
 				Timestamp: utcTime, // Keep in UTC
