@@ -78,6 +78,10 @@ export default function Home() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const animationRef = useRef<NodeJS.Timeout | null>(null)
   const imageContainerRef = useRef<HTMLDivElement>(null)
+  
+  // Store zoom/pan settings per product region/type
+  const zoomPanSettingsRef = useRef<Record<string, { zoom: number, pan: { x: number, y: number } }>>({})
+  const previousProductRef = useRef<WeatherProduct | null>(null)
 
   // Load initial data and weather products
   useEffect(() => {
@@ -181,9 +185,56 @@ export default function Home() {
     fetchInitialData()
   }, [])
 
+  // Get product group key for zoom/pan persistence
+  const getProductGroupKey = (product: WeatherProduct | null): string => {
+    if (!product) return 'default'
+    
+    // Group by region/type for similar products
+    if (product.id.includes('fd_') || product.id.includes('Full Disk')) {
+      return 'full_disk'
+    } else if (product.id.includes('m1_') || product.id.includes('Mesoscale 1')) {
+      return 'mesoscale_1'
+    } else if (product.id.includes('m2_') || product.id.includes('Mesoscale 2')) {
+      return 'mesoscale_2'
+    } else if (product.id.includes('conus') || product.id.includes('CONUS')) {
+      return 'conus'
+    } else if (product.region) {
+      return product.region
+    }
+    return product.satellite || 'default'
+  }
+
   // Handle product selection
   const handleProductSelect = useCallback(async (product: WeatherProduct) => {
     console.log('Selected product:', product)
+    
+    // Save current zoom/pan settings for the previous product group
+    if (previousProductRef.current) {
+      const prevGroupKey = getProductGroupKey(previousProductRef.current)
+      zoomPanSettingsRef.current[prevGroupKey] = {
+        zoom: zoom,
+        pan: { ...panOffset }
+      }
+    }
+    
+    // Check if new product is in same group to preserve settings
+    const newGroupKey = getProductGroupKey(product)
+    const prevGroupKey = getProductGroupKey(previousProductRef.current)
+    
+    if (newGroupKey !== prevGroupKey) {
+      // Different group - restore saved settings or reset
+      const savedSettings = zoomPanSettingsRef.current[newGroupKey]
+      if (savedSettings) {
+        setZoom(savedSettings.zoom)
+        setPanOffset(savedSettings.pan)
+      } else {
+        setZoom(1)
+        setPanOffset({ x: 0, y: 0 })
+      }
+    }
+    // Same group - keep current zoom/pan
+    
+    previousProductRef.current = product
     setSelectedProduct(product)
     setIsImageLoading(true)
     
@@ -231,7 +282,7 @@ export default function Home() {
     } finally {
       setIsImageLoading(false)
     }
-  }, [currentDate, viewMode])
+  }, [currentDate, viewMode, zoom, panOffset])
 
   // Handle date change
   const handleDateChange = async (date: Date | undefined) => {
@@ -477,13 +528,12 @@ export default function Home() {
       setPanOffset({ x: 0, y: 0 })
     }
   }, [zoom])
-
-  // Reset zoom and pan only when switching products or dates
-  // This preserves zoom/pan when navigating between frames for easier comparison
+  
+  // Reset zoom/pan when changing dates (but not products - handled in handleProductSelect)
   useEffect(() => {
     setPanOffset({ x: 0, y: 0 })
     setZoom(1)
-  }, [selectedProduct, currentDate])
+  }, [currentDate])
 
   const renderSingleView = () => (
     <div className="flex-1 flex flex-col items-center overflow-hidden">
