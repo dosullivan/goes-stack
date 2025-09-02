@@ -136,18 +136,23 @@ export function ProductSelector({ onProductSelect, selectedProduct, products }: 
                     return (
                       <Button
                         key={product.id}
-                        variant="ghost"
+                        variant={selectedProduct?.id === product.id ? "default" : "ghost"}
                         size="sm"
                         className={cn(
-                          "w-full justify-start px-2 py-1 h-auto",
-                          selectedProduct?.id === product.id && "bg-accent"
+                          "w-full justify-start px-2 py-1 h-auto transition-colors",
+                          selectedProduct?.id === product.id && "font-semibold"
                         )}
                         onClick={() => onProductSelect(product)}
                       >
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm">{formatProductName(product)}</span>
+                        <div className="flex flex-col items-start w-full">
+                          <div className="flex items-center gap-2 w-full">
+                            {selectedProduct?.id === product.id && (
+                              <span className="text-xs">▶</span>
+                            )}
+                            <span className="text-sm">{formatProductName(product)}</span>
+                          </div>
                           {description && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground ml-5">
                               {description}
                             </span>
                           )}

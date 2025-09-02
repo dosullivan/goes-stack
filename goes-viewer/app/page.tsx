@@ -125,18 +125,20 @@ export default function Home() {
         
         setWeatherProducts(parsedProducts)
         
-        // Set default product - try radar or other EMWIN products first since FD might not have data
+        // Set default product - prioritize GOES-19 Full Disk Color
         const defaultProduct = parsedProducts.find(p => 
-          p.id.includes('radar_us') || 
-          p.id.includes('radar_') ||
-          p.category === 'emwin'
-        ) || parsedProducts.find(p => 
+          p.id === 'fd_fc' || 
           p.id === 'fd_color' || 
-          p.id === 'fc' || 
-          p.name.toLowerCase().includes('color')
+          (p.name.toLowerCase().includes('full disk') && p.name.toLowerCase().includes('color')) ||
+          (p.satellite === 'goes19' && p.name.toLowerCase().includes('color'))
+        ) || parsedProducts.find(p => 
+          p.satellite === 'goes19' && p.region === 'fd'
+        ) || parsedProducts.find(p => 
+          p.satellite === 'goes19'
         ) || parsedProducts[0]
         if (defaultProduct) {
           setSelectedProduct(defaultProduct)
+          previousProductRef.current = defaultProduct
         }
         
         if (dates.availableDates.length > 0) {
@@ -202,6 +204,29 @@ export default function Home() {
       return product.region
     }
     return product.satellite || 'default'
+  }
+  
+  // Get products in same order as displayed in sidebar
+  const getOrderedProducts = (products: WeatherProduct[]): WeatherProduct[] => {
+    // Group products by category/satellite (matching ProductSelector logic)
+    const groups: Record<string, WeatherProduct[]> = {}
+    
+    products.forEach(product => {
+      const category = product.satellite || product.category || 'Other'
+      if (!groups[category]) {
+        groups[category] = []
+      }
+      groups[category].push(product)
+    })
+    
+    // Sort products within each group and flatten
+    const orderedProducts: WeatherProduct[] = []
+    Object.keys(groups).sort().forEach(groupName => {
+      const sortedGroup = groups[groupName].sort((a, b) => a.name.localeCompare(b.name))
+      orderedProducts.push(...sortedGroup)
+    })
+    
+    return orderedProducts
   }
 
   // Handle product selection
@@ -436,21 +461,25 @@ export default function Home() {
           handleNext()
           break
         case 'ArrowUp':
-          // Navigate to previous product
+          // Navigate to previous product in visual order
           if (selectedProduct && weatherProducts.length > 0) {
-            const currentIdx = weatherProducts.findIndex(p => p.id === selectedProduct.id)
+            // Get products in same order as sidebar (grouped and sorted)
+            const orderedProducts = getOrderedProducts(weatherProducts)
+            const currentIdx = orderedProducts.findIndex(p => p.id === selectedProduct.id)
             if (currentIdx > 0) {
-              handleProductSelect(weatherProducts[currentIdx - 1])
+              handleProductSelect(orderedProducts[currentIdx - 1])
             }
           }
           e.preventDefault()
           break
         case 'ArrowDown':
-          // Navigate to next product
+          // Navigate to next product in visual order
           if (selectedProduct && weatherProducts.length > 0) {
-            const currentIdx = weatherProducts.findIndex(p => p.id === selectedProduct.id)
-            if (currentIdx < weatherProducts.length - 1) {
-              handleProductSelect(weatherProducts[currentIdx + 1])
+            // Get products in same order as sidebar (grouped and sorted)
+            const orderedProducts = getOrderedProducts(weatherProducts)
+            const currentIdx = orderedProducts.findIndex(p => p.id === selectedProduct.id)
+            if (currentIdx < orderedProducts.length - 1) {
+              handleProductSelect(orderedProducts[currentIdx + 1])
             }
           }
           e.preventDefault()
