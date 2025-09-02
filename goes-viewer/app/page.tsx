@@ -350,15 +350,59 @@ export default function Home() {
     setPanOffset({ x: 0, y: 0 })
   }
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts - combined handler to avoid conflicts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      // WASD for panning when zoomed
+      if (zoom > 1 && viewMode === 'single') {
+        const panSpeed = 50
+        switch(e.key.toLowerCase()) {
+          case 'w':
+            setPanOffset(prev => ({ ...prev, y: prev.y + panSpeed }))
+            e.preventDefault()
+            return
+          case 's':
+            setPanOffset(prev => ({ ...prev, y: prev.y - panSpeed }))
+            e.preventDefault()
+            return
+          case 'a':
+            setPanOffset(prev => ({ ...prev, x: prev.x + panSpeed }))
+            e.preventDefault()
+            return
+          case 'd':
+            setPanOffset(prev => ({ ...prev, x: prev.x - panSpeed }))
+            e.preventDefault()
+            return
+        }
+      }
+      
+      // Other keyboard shortcuts
       switch(e.key) {
         case 'ArrowLeft':
           handlePrevious()
           break
         case 'ArrowRight':
           handleNext()
+          break
+        case 'ArrowUp':
+          // Navigate to previous product
+          if (selectedProduct && weatherProducts.length > 0) {
+            const currentIdx = weatherProducts.findIndex(p => p.id === selectedProduct.id)
+            if (currentIdx > 0) {
+              handleProductSelect(weatherProducts[currentIdx - 1])
+            }
+          }
+          e.preventDefault()
+          break
+        case 'ArrowDown':
+          // Navigate to next product
+          if (selectedProduct && weatherProducts.length > 0) {
+            const currentIdx = weatherProducts.findIndex(p => p.id === selectedProduct.id)
+            if (currentIdx < weatherProducts.length - 1) {
+              handleProductSelect(weatherProducts[currentIdx + 1])
+            }
+          }
+          e.preventDefault()
           break
         case ' ':
           if (viewMode === 'animation') {
@@ -379,19 +423,19 @@ export default function Home() {
           setViewMode('animation')
           break
         case 'b':
-          setSidebarOpen(!sidebarOpen)
+          setSidebarOpen(prev => !prev)
           break
         case '+':
         case '=':
           // + key (with or without shift)
           if (viewMode === 'single') {
-            setZoom(Math.min(3, zoom + 0.25))
+            setZoom(prev => Math.min(3, prev + 0.25))
           }
           break
         case '-':
           // - key for zoom out
           if (viewMode === 'single') {
-            setZoom(Math.max(0.5, zoom - 0.25))
+            setZoom(prev => Math.max(0.5, prev - 0.25))
           }
           break
       }
@@ -399,7 +443,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [currentIndex, images, viewMode, sidebarOpen, zoom])
+  }, [viewMode, zoom, handlePrevious, handleNext, handlePlayPause, selectedProduct, weatherProducts, handleProductSelect])
 
   // Pan and zoom handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -426,36 +470,6 @@ export default function Home() {
   const handleMouseLeave = () => {
     setIsDragging(false)
   }
-
-  // Keyboard navigation for panning - using WASD keys to avoid arrow key conflicts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (zoom > 1 && viewMode === 'single') {
-        const panSpeed = 50
-        switch(e.key.toLowerCase()) {
-          case 'w':
-            setPanOffset(prev => ({ ...prev, y: prev.y + panSpeed }))
-            e.preventDefault()
-            break
-          case 's':
-            setPanOffset(prev => ({ ...prev, y: prev.y - panSpeed }))
-            e.preventDefault()
-            break
-          case 'a':
-            setPanOffset(prev => ({ ...prev, x: prev.x + panSpeed }))
-            e.preventDefault()
-            break
-          case 'd':
-            setPanOffset(prev => ({ ...prev, x: prev.x - panSpeed }))
-            e.preventDefault()
-            break
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [zoom, viewMode])
 
   // Reset pan when zoom changes to 1
   useEffect(() => {
@@ -856,30 +870,25 @@ export default function Home() {
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
-        {(
-          <>
-            {/* Sidebar */}
-            {sidebarOpen && (
-              <div className={cn(
-                "bg-background border-r overflow-hidden shadow-xl",
-                "fixed lg:relative top-[57px] lg:top-0 bottom-0 left-0",
-                "w-80",
-                "z-[100]"
-              )}>
-                <ProductSelector
-                  products={weatherProducts}
-                  selectedProduct={selectedProduct}
-                  onProductSelect={handleProductSelect}
-                />
-              </div>
-            )}
-          </>
-        )}
+        <div className={cn(
+          "bg-background border-r overflow-hidden shadow-xl transition-all duration-300",
+          "fixed lg:relative top-[57px] lg:top-0 bottom-0 left-0",
+          "z-[100]",
+          sidebarOpen ? "w-80" : "w-0"
+        )}>
+          {sidebarOpen && (
+            <ProductSelector
+              products={weatherProducts}
+              selectedProduct={selectedProduct}
+              onProductSelect={handleProductSelect}
+            />
+          )}
+        </div>
         
         {/* Content area */}
         <div className={cn(
           "flex-1 flex flex-col relative",
-          sidebarOpen && "lg:block hidden"
+          sidebarOpen && "lg:flex hidden"
         )}>
           {viewMode === 'single' && renderSingleView()}
           {viewMode === 'grid' && renderGridView()}
