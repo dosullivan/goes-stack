@@ -13,7 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { fetchEmwinCategories, fetchEmwinFiles, fetchEmwinContent, fetchWeatherOffices } from '@/lib/api'
 import { format } from 'date-fns'
-import { FileText, Calendar, MapPin, RefreshCw } from 'lucide-react'
+import { FileText, Calendar, MapPin, RefreshCw, Menu } from 'lucide-react'
 
 interface EmwinFile {
   key?: string
@@ -26,9 +26,11 @@ interface EmwinFile {
 
 interface EmwinViewerProps {
   selectedDate?: Date
+  sidebarOpen?: boolean
+  setSidebarOpen?: (open: boolean) => void
 }
 
-export function EmwinViewer({ selectedDate: propSelectedDate }: EmwinViewerProps) {
+export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true, setSidebarOpen }: EmwinViewerProps) {
   const [categories, setCategories] = useState<any[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [offices, setOffices] = useState<any[]>([])
@@ -215,78 +217,100 @@ export function EmwinViewer({ selectedDate: propSelectedDate }: EmwinViewerProps
       </div>
 
       <div className="flex-1 flex gap-4 overflow-hidden">
-        <Card className="w-1/3 flex flex-col">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Available Files</CardTitle>
-            <CardDescription className="text-xs">
-              {files.length} files in {selectedCategory}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-0">
-            <ScrollArea className="h-full px-4">
-              <div className="space-y-2 pb-4">
-                {files.map(file => {
-                  const info = formatFileInfo(file)
-                  return (
-                    <Button
-                      key={file.url || file.filename}
-                      variant={selectedFile?.url === file.url ? "secondary" : "ghost"}
-                      className="w-full justify-start h-auto py-2 px-3"
-                      onClick={() => loadFileContent(file)}
-                    >
-                      <div className="flex flex-col items-start w-full">
-                        <div className="flex items-center gap-2 text-sm">
-                          <FileText className="h-3 w-3" />
-                          <span className="truncate">{file.filename}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {info.station}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {info.time}
-                          </span>
-                        </div>
-                      </div>
-                    </Button>
-                  )
-                })}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        <Card className="flex-1 flex flex-col">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">
-              {selectedFile ? selectedFile.filename : 'File Content'}
-            </CardTitle>
-            {selectedFile && (
+        {/* Sidebar - File List */}
+        <div className={`${sidebarOpen ? 'w-full lg:w-1/3' : 'hidden lg:hidden'} ${!sidebarOpen && !selectedFile ? 'flex' : ''} lg:flex transition-all duration-300`}>
+          <Card className="w-full flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Available Files</CardTitle>
               <CardDescription className="text-xs">
-                {selectedFile.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : ''}
+                {files.length} files in {selectedCategory}
               </CardDescription>
-            )}
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden p-0">
-            <ScrollArea className="h-full">
-              {isLoading ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  Loading content...
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden p-0">
+              <ScrollArea className="h-full px-4">
+                <div className="space-y-2 pb-4">
+                  {files.map(file => {
+                    const info = formatFileInfo(file)
+                    return (
+                      <Button
+                        key={file.url || file.filename}
+                        variant={selectedFile?.url === file.url ? "secondary" : "ghost"}
+                        className="w-full justify-start h-auto py-2 px-3"
+                        onClick={() => {
+                          loadFileContent(file)
+                          // Close sidebar on mobile after selection
+                          if (window.innerWidth < 1024 && setSidebarOpen) {
+                            setSidebarOpen(false)
+                          }
+                        }}
+                      >
+                        <div className="flex flex-col items-start w-full">
+                          <div className="flex items-center gap-2 text-sm">
+                            <FileText className="h-3 w-3" />
+                            <span className="truncate">{file.filename}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {info.station}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {info.time}
+                            </span>
+                          </div>
+                        </div>
+                      </Button>
+                    )
+                  })}
                 </div>
-              ) : fileContent ? (
-                <pre className="p-4 text-xs font-mono whitespace-pre-wrap">
-                  {fileContent}
-                </pre>
-              ) : (
-                <div className="p-4 text-center text-muted-foreground">
-                  Select a file to view its content
-                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Content Area */}
+        <div className={`${sidebarOpen && !selectedFile ? 'hidden lg:flex' : 'flex'} flex-1`}>
+          <Card className="w-full flex flex-col">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span>{selectedFile ? selectedFile.filename : 'File Content'}</span>
+                {selectedFile && setSidebarOpen && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="lg:hidden h-8 w-8"
+                  >
+                    <Menu className="h-4 w-4" />
+                  </Button>
+                )}
+              </CardTitle>
+              {selectedFile && (
+                <CardDescription className="text-xs">
+                  {selectedFile.size ? `${(selectedFile.size / 1024).toFixed(1)} KB` : ''}
+                </CardDescription>
               )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden p-0">
+              <ScrollArea className="h-full">
+                {isLoading ? (
+                  <div className="p-4 text-center text-muted-foreground">
+                    Loading content...
+                  </div>
+                ) : fileContent ? (
+                  <pre className="p-4 text-xs font-mono whitespace-pre-wrap">
+                    {fileContent}
+                  </pre>
+                ) : (
+                  <div className="p-4 text-center text-muted-foreground">
+                    Select a file to view its content
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
