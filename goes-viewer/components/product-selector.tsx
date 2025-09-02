@@ -98,12 +98,12 @@ export function ProductSelector({ onProductSelect, selectedProduct, products }: 
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="p-4 border-b">
+    <div className="h-full flex flex-col bg-background">
+      <div className="p-4 border-b bg-background">
         <h2 className="text-lg font-semibold">Data Products</h2>
       </div>
       
-      <div className="flex-1 overflow-y-auto scrollbar-gutter-stable">
+      <div className="flex-1 overflow-y-auto scrollbar-gutter-stable bg-background">
         <div className="p-2">
           {productGroups.map(group => (
             <div key={group.name} className="mb-2">

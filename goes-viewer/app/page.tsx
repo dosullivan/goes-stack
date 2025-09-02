@@ -858,33 +858,29 @@ export default function Home() {
         {/* Sidebar */}
         {(
           <>
-            {/* Mobile sidebar backdrop */}
-            {sidebarOpen && (
-              <div 
-                className="fixed inset-0 top-[57px] bg-black/50 z-40 lg:hidden"
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-            
             {/* Sidebar */}
-            <div className={cn(
-              "bg-background border-r bg-muted/10 transition-all duration-300",
-              "fixed lg:relative top-[57px] lg:top-0 bottom-0 left-0 z-50 lg:z-0",
-              sidebarOpen ? "w-80" : "w-0"
-            )}>
-              {sidebarOpen && (
+            {sidebarOpen && (
+              <div className={cn(
+                "bg-background border-r overflow-hidden shadow-xl",
+                "fixed lg:relative top-[57px] lg:top-0 bottom-0 left-0",
+                "w-80",
+                "z-[100]"
+              )}>
                 <ProductSelector
                   products={weatherProducts}
                   selectedProduct={selectedProduct}
                   onProductSelect={handleProductSelect}
                 />
-              )}
-            </div>
+              </div>
+            )}
           </>
         )}
         
         {/* Content area */}
-        <div className="flex-1 flex flex-col">
+        <div className={cn(
+          "flex-1 flex flex-col relative",
+          sidebarOpen && "lg:block hidden"
+        )}>
           {viewMode === 'single' && renderSingleView()}
           {viewMode === 'grid' && renderGridView()}
           {viewMode === 'compare' && renderCompareView()}

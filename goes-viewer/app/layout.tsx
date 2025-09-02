@@ -28,8 +28,8 @@ export default function RootLayout({
           disableTransitionOnChange
           storageKey="goes-viewer-theme"
         >
-          <div className="min-h-screen p-2 bg-background">
-            <main className="h-[calc(100vh-1rem)] border-2 border-white overflow-hidden bg-background">
+          <div className="min-h-screen bg-background">
+            <main className="h-screen overflow-hidden bg-background">
               {children}
             </main>
           </div>
