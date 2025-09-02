@@ -87,6 +87,9 @@ export default function EmwinPage() {
                   <li>Filter by office location</li>
                 </ul>
                 <p className="text-xs text-muted-foreground mt-2">
+                  Hotkeys: B (toggle sidebar), W/S (previous/next file)
+                </p>
+                <p className="text-xs text-muted-foreground">
                   Data updates every few minutes
                 </p>
               </div>

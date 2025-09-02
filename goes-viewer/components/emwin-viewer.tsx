@@ -45,6 +45,40 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
     loadCategories()
     loadOffices()
   }, [])
+  
+  // Keyboard shortcuts for sidebar toggle and file navigation
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase()
+      
+      // B - toggle sidebar
+      if (key === 'b' && setSidebarOpen) {
+        setSidebarOpen(!sidebarOpen)
+      }
+      
+      // W - previous file, S - next file
+      if (files.length > 0) {
+        const currentIndex = selectedFile ? files.findIndex(f => f.url === selectedFile.url || f.filename === selectedFile.filename) : -1
+        
+        if (key === 'w' && currentIndex > 0) {
+          // Go to previous file
+          e.preventDefault()
+          loadFileContent(files[currentIndex - 1])
+        } else if (key === 's' && currentIndex < files.length - 1) {
+          // Go to next file
+          e.preventDefault()
+          loadFileContent(files[currentIndex + 1])
+        } else if (key === 's' && currentIndex === -1 && files.length > 0) {
+          // No file selected, select first
+          e.preventDefault()
+          loadFileContent(files[0])
+        }
+      }
+    }
+    
+    window.addEventListener('keydown', handleKeyPress)
+    return () => window.removeEventListener('keydown', handleKeyPress)
+  }, [sidebarOpen, setSidebarOpen, files, selectedFile])
 
   useEffect(() => {
     if (propSelectedDate) {
@@ -177,8 +211,8 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
   }
 
   return (
-    <div className="h-full flex flex-col p-4">
-      <div className="mb-4 flex gap-4 items-center">
+    <div className="h-full flex flex-col p-4 overflow-hidden">
+      <div className="mb-4 flex gap-4 items-center flex-shrink-0">
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Select category" />
@@ -216,18 +250,18 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
         </Button>
       </div>
 
-      <div className="flex-1 flex gap-4 overflow-hidden">
+      <div className="flex-1 flex gap-4 min-h-0">
         {/* Sidebar - File List */}
-        <div className={`${sidebarOpen ? 'w-full lg:w-1/3' : 'hidden lg:hidden'} ${!sidebarOpen && !selectedFile ? 'flex' : ''} lg:flex transition-all duration-300`}>
-          <Card className="w-full flex flex-col">
-            <CardHeader className="pb-3">
+        <div className={`${sidebarOpen ? 'w-full lg:w-1/3' : 'hidden lg:hidden'} ${!sidebarOpen && !selectedFile ? 'flex' : ''} lg:flex transition-all duration-300 h-full`}>
+          <Card className="w-full h-full flex flex-col">
+            <CardHeader className="pb-3 flex-shrink-0">
               <CardTitle className="text-sm">Available Files</CardTitle>
               <CardDescription className="text-xs">
                 {files.length} files in {selectedCategory}
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0">
-              <ScrollArea className="h-full px-4">
+            <CardContent className="flex-1 overflow-y-auto p-0">
+              <div className="px-4">
                 <div className="space-y-2 pb-4">
                   {files.map(file => {
                     const info = formatFileInfo(file)
@@ -264,15 +298,15 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
                     )
                   })}
                 </div>
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Content Area */}
-        <div className={`${sidebarOpen && !selectedFile ? 'hidden lg:flex' : 'flex'} flex-1`}>
-          <Card className="w-full flex flex-col">
-            <CardHeader className="pb-3">
+        <div className={`${sidebarOpen && !selectedFile ? 'hidden lg:flex' : 'flex'} flex-1 h-full`}>
+          <Card className="w-full h-full flex flex-col">
+            <CardHeader className="pb-3 flex-shrink-0">
               <CardTitle className="text-sm flex items-center justify-between">
                 <span>{selectedFile ? selectedFile.filename : 'File Content'}</span>
                 {selectedFile && setSidebarOpen && (
@@ -292,22 +326,20 @@ export function EmwinViewer({ selectedDate: propSelectedDate, sidebarOpen = true
                 </CardDescription>
               )}
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0">
-              <ScrollArea className="h-full">
-                {isLoading ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    Loading content...
-                  </div>
-                ) : fileContent ? (
-                  <pre className="p-4 text-xs font-mono whitespace-pre-wrap">
-                    {fileContent}
-                  </pre>
-                ) : (
-                  <div className="p-4 text-center text-muted-foreground">
-                    Select a file to view its content
-                  </div>
-                )}
-              </ScrollArea>
+            <CardContent className="flex-1 overflow-y-auto p-0">
+              {isLoading ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  Loading content...
+                </div>
+              ) : fileContent ? (
+                <pre className="p-4 text-xs font-mono whitespace-pre-wrap">
+                  {fileContent}
+                </pre>
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  Select a file to view its content
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
