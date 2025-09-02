@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -205,8 +206,10 @@ func getProductImagesForDateUTC(ctx context.Context, client *minio.Client, bucke
 			continue
 		}
 
+		// Use proxied URL instead of direct MinIO URL
+		proxiedURL := "/proxy/image?url=" + url.QueryEscape(baseURL + object.Key)
 		images = append(images, ProductImage{
-			URL:       baseURL + object.Key,
+			URL:       proxiedURL,
 			Timestamp: utcTime, // Keep in UTC
 			Filename:  object.Key[strings.LastIndex(object.Key, "/")+1:],
 		})
@@ -256,8 +259,10 @@ func getRecentProductImagesUTC(ctx context.Context, client *minio.Client, bucket
 				continue
 			}
 
+			// Use proxied URL instead of direct MinIO URL
+			proxiedURL := "/proxy/image?url=" + url.QueryEscape(baseURL + object.Key)
 			images = append(images, ProductImage{
-				URL:       baseURL + object.Key,
+				URL:       proxiedURL,
 				Timestamp: utcTime, // Keep in UTC
 				Filename:  object.Key[strings.LastIndex(object.Key, "/")+1:],
 			})
