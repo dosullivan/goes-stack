@@ -18,7 +18,7 @@ services:
     container_name: goesproc-watchdog
     restart: unless-stopped
     environment:
-      TARGET_HOST: "10.0.4.105"
+      TARGET_HOST: "10.0.4.104"
       TARGET_PORT: "5004"
       CHECK_INTERVAL: "15"         # seconds between checks
       UP_STREAK: "2"               # require N consecutive successes before “recovered”
