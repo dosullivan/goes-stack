@@ -13,6 +13,23 @@ services:
     command: ["goesproc", "-c", "/config/goesproc.conf", "-m", "packet", "--subscribe", "tcp://10.0.5.104:5004"]
     restart: unless-stopped
 
+  goesproc-watchdog:
+    image: alpine:3.20
+    container_name: goesproc-watchdog
+    restart: unless-stopped
+    environment:
+      TARGET_HOST: "10.0.5.104"
+      TARGET_PORT: "5004"
+      CHECK_INTERVAL: "15"         # seconds between checks
+      UP_STREAK: "2"               # require N consecutive successes before “recovered”
+      DOWN_STREAK: "3"             # require N consecutive failures before “down”
+      SERVICE_NAME: "goesproc"     # docker container name to restart
+      COOLDOWN_SEC: "30"           # minimum time between restarts
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts/watch.sh:/usr/local/bin/watch.sh:ro
+    command: ["sh", "/usr/local/bin/watch.sh"]
+
   uploader:
     build:
       context: .
