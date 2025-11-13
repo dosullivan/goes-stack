@@ -26,7 +26,7 @@ export function parseTimestamp(input: string | undefined) {
     const second = timeStr.substring(4, 6);
     
     const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
-    return date.toLocaleString();
+    return date.toLocaleString('en-US', { timeZone: 'UTC', hour12: false }) + ' UTC';
   }
   
   // Try old format: c20240360000202
@@ -46,7 +46,7 @@ export function parseTimestamp(input: string | undefined) {
       parseInt(second, 10)
     );
 
-    return date.toLocaleString();
+    return date.toLocaleString('en-US', { timeZone: 'UTC', hour12: false }) + ' UTC';
   }
   
   return '';

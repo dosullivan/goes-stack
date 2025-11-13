@@ -158,9 +158,10 @@ export default function Home() {
                 // Reverse for chronological order (oldest to newest) for animations
                 const chronologicalUrls = [...urls].reverse()
                 setImages(chronologicalUrls)
-                setCurrentIndex(0)
-                setCurrentImage(chronologicalUrls[0])
-                setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
+                const latestIndex = chronologicalUrls.length - 1
+                setCurrentIndex(latestIndex)
+                setCurrentImage(chronologicalUrls[latestIndex])
+                setCurrentTimestamp(parseTimestamp(chronologicalUrls[latestIndex]))
               }
             } catch {
               console.log('No images for default product')
@@ -282,10 +283,11 @@ export default function Home() {
         // Reverse for chronological order (oldest to newest) for animations
         const chronologicalUrls = [...urls].reverse()
         setImages(chronologicalUrls)
-        setCurrentIndex(0)
-        setCurrentImage(chronologicalUrls[0])
-        setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
-        
+        const latestIndex = chronologicalUrls.length - 1
+        setCurrentIndex(latestIndex)
+        setCurrentImage(chronologicalUrls[latestIndex])
+        setCurrentTimestamp(parseTimestamp(chronologicalUrls[latestIndex]))
+
         // For comparison mode, set first two images
         if (viewMode === 'compare' && chronologicalUrls.length > 1) {
           setCompareImages([chronologicalUrls[0], chronologicalUrls[1]])
@@ -329,9 +331,10 @@ export default function Home() {
           // Reverse for chronological order (oldest to newest) for animations
           const chronologicalUrls = [...urls].reverse()
           setImages(chronologicalUrls)
-          setCurrentIndex(0)
-          setCurrentImage(chronologicalUrls[0])
-          setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
+          const latestIndex = chronologicalUrls.length - 1
+          setCurrentIndex(latestIndex)
+          setCurrentImage(chronologicalUrls[latestIndex])
+          setCurrentTimestamp(parseTimestamp(chronologicalUrls[latestIndex]))
         }
       } else {
         const imageUrls = await fetchImagesByDate(date)
@@ -345,9 +348,10 @@ export default function Home() {
         // Reverse for chronological order (oldest to newest) for animations
         const chronologicalUrls = [...urls].reverse()
         setImages(chronologicalUrls)
-        setCurrentIndex(0)
-        setCurrentImage(chronologicalUrls[0])
-        setCurrentTimestamp(parseTimestamp(chronologicalUrls[0]))
+        const latestIndex = chronologicalUrls.length - 1
+        setCurrentIndex(latestIndex)
+        setCurrentImage(chronologicalUrls[latestIndex])
+        setCurrentTimestamp(parseTimestamp(chronologicalUrls[latestIndex]))
       }
     } catch (error) {
       console.error('Error fetching images for date:', error)
