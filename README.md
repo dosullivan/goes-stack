@@ -71,7 +71,7 @@ satdump live goes_hrit_tcp GOES_19 \
   --http_server 0.0.0.0:8080
 ```
 
-`--http_server 0.0.0.0:8080` exposes satdump's web UI for monitoring SNR and the BPSK constellation. The `goes_hrit_tcp` pipeline also publishes the demodulated stream over TCP on port 5004 by default — `goesproc-docker` (running on your indoor server) connects out to the Pi at `<pi-ip>:5004` to consume it (see the `--subscribe tcp://<pi-ip>:5004` argument in `goesproc-docker/docker-compose.yml`).
+`--http_server 0.0.0.0:8080` exposes a `/api` healthcheck API endpoint reporting SNR etc. The `goes_hrit_tcp` pipeline also publishes the demodulated stream over TCP on port 5004 by default — `goesproc-docker` (running on your indoor server) connects out to the Pi at `<pi-ip>:5004` to consume it (see the `--subscribe tcp://<pi-ip>:5004` argument in `goesproc-docker/docker-compose.yml`).
 
 To keep satdump running on the Pi across reboots, drop in the systemd unit at [`goesrecv/satdump-goes19.service`](goesrecv/satdump-goes19.service) — install steps are in [`goesrecv/README.md`](goesrecv/README.md).
 
