@@ -19,3 +19,16 @@ npm run dev
 ## Required Environment Variables
 
 - `NEXT_PUBLIC_API_URL`: The URL of the goes-api-go backend API.
+
+## Image hostname allowlist
+
+Next.js's `<Image>` component refuses to load images from hostnames not declared in [`next.config.ts`](next.config.ts) under `images.remotePatterns`. The hostname there must exactly match the host that goes-api-go is returning in its `imageUrl` / `imageUrls` responses (which is built from goes-api-go's `S3_ENDPOINT` env var).
+
+The hostname currently checked into [`next.config.ts`](next.config.ts) (`rustfs.int.ridge.casa`) is just the author's internal DNS name — replace it with whatever hostname your own S3 backend is reachable at before building.
+
+If you change the S3 endpoint hostname (e.g. swap from `minio.local` to `rustfs.local`, move to a new domain, or stand up a second backend), you must:
+
+1. Update the `hostname` entry in `next.config.ts`.
+2. Rebuild the goes-viewer container (`docker compose up -d --build`) — `next.config.ts` is consumed at build time, not runtime.
+
+Symptom of a mismatch: the API responses look right (`/latest` returns a sensible URL), but image tiles in the UI render blank or as broken-image placeholders. Browser devtools will show 400 responses from `/_next/image` with a message about the hostname not being allowed.
