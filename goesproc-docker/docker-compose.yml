@@ -10,7 +10,8 @@ services:
       - ./config:/config
       - ./output:/output
     working_dir: /data
-    command: ["goesproc", "-c", "/config/goesproc.conf", "-m", "packet", "--subscribe", "tcp://10.0.5.104:5004"]
+    # Override `command` in docker-compose.override.yml to point at your Pi's IP.
+    command: ["goesproc", "-c", "/config/goesproc.conf", "-m", "packet", "--subscribe", "tcp://pi.local:5004"]
     restart: unless-stopped
 
   goesproc-watchdog:
@@ -18,7 +19,8 @@ services:
     container_name: goesproc-watchdog
     restart: unless-stopped
     environment:
-      TARGET_HOST: "10.0.5.104"
+      # Override TARGET_HOST in docker-compose.override.yml to point at your Pi's IP.
+      TARGET_HOST: "pi.local"
       TARGET_PORT: "5004"
       CHECK_INTERVAL: "15"         # seconds between checks
       UP_STREAK: "2"               # require N consecutive successes before “recovered”
