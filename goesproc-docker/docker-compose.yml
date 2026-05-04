@@ -2,8 +2,8 @@ version: '3.8'
 
 services:
   goesproc:
-    build: .
-    image: goesproc:latest
+    image: ghcr.io/dosullivan/goesproc:latest
+    build: .                              # `docker compose up -d --build` to build locally instead
     container_name: goesproc
     volumes:
       - ./data:/data
@@ -33,7 +33,8 @@ services:
     command: ["sh", "/usr/local/bin/watch.sh"]
 
   uploader:
-    build:
+    image: ghcr.io/dosullivan/goesproc-uploader:latest
+    build:                                # `docker compose up -d --build` to build locally instead
       context: .
       dockerfile: Dockerfile.uploader
     container_name: goesproc-uploader

@@ -1,6 +1,6 @@
 services:
   goes-api:
-    image: ghcr.io/dosullivan/goes-api:latest # use goes-api:latest for local dev in your override file and the build: section
+    image: ghcr.io/dosullivan/goes-api-go:latest # use goes-api-go:latest for local dev in your override file and the build: section
     #ports:
     #  - "3000:3000"
     environment:
