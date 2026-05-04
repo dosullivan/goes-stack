@@ -20,16 +20,16 @@ The unit exposes both the satdump web UI on port 8080 and the demodulated TCP st
 On the Pi:
 
 ```bash
-sudo cp satdump-goes18.service /etc/systemd/system/
+sudo cp satdump-goes19.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now satdump-goes18.service
+sudo systemctl enable --now satdump-goes19.service
 ```
 
 ## Checking that it's running
 
 ```bash
-systemctl status satdump-goes18           # current state
-sudo journalctl -u satdump-goes18 -f      # tail logs
+systemctl status satdump-goes19           # current state
+sudo journalctl -u satdump-goes19 -f      # tail logs
 ```
 
 You should see satdump locking onto the signal and reporting SNR. Then load `http://<pi-ip>:8080` in a browser to see the live constellation/decoder UI.
@@ -39,7 +39,7 @@ You should see satdump locking onto the signal and reporting SNR. Then load `htt
 After editing the file:
 
 ```bash
-sudo cp satdump-goes18.service /etc/systemd/system/
+sudo cp satdump-goes19.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl restart satdump-goes18
+sudo systemctl restart satdump-goes19
 ```
