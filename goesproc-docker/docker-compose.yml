@@ -12,12 +12,12 @@ services:
     working_dir: /data
     # Override `command` in docker-compose.override.yml to point at your Pi's IP.
     command: ["goesproc", "-c", "/config/goesproc.conf", "-m", "packet", "--subscribe", "tcp://pi.local:5004"]
-    restart: unless-stopped
+    restart: always
 
   goesproc-watchdog:
     image: alpine:3.20
     container_name: goesproc-watchdog
-    restart: unless-stopped
+    restart: always
     environment:
       # Override TARGET_HOST in docker-compose.override.yml to point at your Pi's IP.
       TARGET_HOST: "pi.local"
