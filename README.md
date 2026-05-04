@@ -127,6 +127,8 @@ docker-compose up -d
 
 This creates an S3-compatible storage backend at `http://localhost:9000`. Visit the RustFS console at `http://localhost:9001`, create a bucket named `goes-data`, and generate an access key pair for the next steps.
 
+> A one-shot `rustfs-init` container runs first to chown `./data/` to the in-container `rustfs` UID (10001) so the bind mount is writable. If RustFS ever changes its container UID, update the chown target in [`rustfs/docker-compose.yml`](rustfs/docker-compose.yml).
+
 ### 2. Start goesproc Processing with Auto-Upload
 
 Create `goesproc-docker/docker-compose.override.yml` with your S3 endpoint and credentials:
