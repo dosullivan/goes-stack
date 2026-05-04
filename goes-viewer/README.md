@@ -24,7 +24,7 @@ npm run dev
 
 Next.js's `<Image>` component refuses to load images from hostnames not declared in [`next.config.ts`](next.config.ts) under `images.remotePatterns`. The hostname there must exactly match the host that goes-api-go is returning in its `imageUrl` / `imageUrls` responses (which is built from goes-api-go's `S3_ENDPOINT` env var).
 
-The hostname currently checked into [`next.config.ts`](next.config.ts) (`rustfs.int.ridge.casa`) is just the author's internal DNS name — replace it with whatever hostname your own S3 backend is reachable at before building.
+The hostname currently checked into [`next.config.ts`](next.config.ts) (`s3.local`) is just a placeholder — replace it with whatever hostname your own S3 backend is reachable at before building.
 
 If you change the S3 endpoint hostname (e.g. swap from `minio.local` to `rustfs.local`, move to a new domain, or stand up a second backend), you must:
 

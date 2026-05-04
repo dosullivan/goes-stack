@@ -7,7 +7,7 @@ const nextConfig = {
       // goes-api-go's S3_ENDPOINT. See README.md ("Image hostname allowlist").
       {
         protocol: 'http',
-        hostname: 'rustfs.int.ridge.casa',
+        hostname: 's3.local',
         port: '9000',
         pathname: '/**',
       },

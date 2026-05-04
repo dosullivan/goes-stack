@@ -4,6 +4,6 @@ services:
     ports:
       - "3009:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://192.168.7.8:3010 # adjust as needed for your API
-      - API_BASE_URL=http://192.168.7.8:3010
+      - NEXT_PUBLIC_API_URL=http://api.local:3010 # adjust as needed for your goes-api-go host
+      - API_BASE_URL=http://api.local:3010
     restart: unless-stopped 
