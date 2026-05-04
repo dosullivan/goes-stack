@@ -55,7 +55,7 @@ services:
         echo 'Starting upload loop...' &&
         while true; do
           echo \"\$(date): Starting upload cycle\" >> /logs/upload.log
-          /scripts/upload-optimized.sh >> /logs/upload.log 2>&1
+          /scripts/upload.sh >> /logs/upload.log 2>&1
           echo \"\$(date): Upload cycle completed, sleeping for \$${UPLOAD_INTERVAL} seconds\" >> /logs/upload.log
           sleep \$${UPLOAD_INTERVAL}
         done

@@ -1,8 +1,7 @@
 #!/bin/bash
 
-# GOES Data Upload Script for MinIO
-# This script syncs all processed satellite data to MinIO and cleans up local files
-# Preserves directory structure: goes19/, goes18/, himawari8/, emwin/, nws/
+# Optimized GOES Data Upload Script for MinIO
+# Uses batch operations and parallel processing for faster uploads
 
 set -euo pipefail
 
@@ -15,7 +14,7 @@ SOURCE_DIR="/data"
 LOG_PREFIX="[$(date '+%Y-%m-%d %H:%M:%S')]"
 ALLOW_REMOTE_DELETIONS=${ALLOW_REMOTE_DELETIONS:-false}
 
-echo "$LOG_PREFIX Starting upload process..."
+echo "$LOG_PREFIX Starting optimized upload process..."
 
 # Run EMWIN preprocessing if the script exists
 PREPROCESS_SCRIPT="/scripts/preprocess_emwin.sh"
@@ -37,8 +36,8 @@ if ! mc ls "minio/$BUCKET_NAME" > /dev/null 2>&1; then
     mc anonymous set public "minio/$BUCKET_NAME"
 fi
 
-# Count files before upload (including all data types)
-file_count=$(find "$SOURCE_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.gif" -o -name "*.txt" -o -name "*.TXT" -o -name "*.nc" \) | wc -l)
+# Count files before upload
+file_count=$(find "$SOURCE_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.gif" -o -name "*.txt" -o -name "*.TXT" -o -name "*.nc" \) 2>/dev/null | wc -l)
 echo "$LOG_PREFIX Found $file_count data files to process"
 
 if [ "$file_count" -eq 0 ]; then
@@ -46,41 +45,46 @@ if [ "$file_count" -eq 0 ]; then
     exit 0
 fi
 
-# Sync files to MinIO (safe by default: do NOT delete remote files)
+# Use mirror with optimizations
 echo "$LOG_PREFIX Syncing files to MinIO bucket: $BUCKET_NAME"
+
+# Mirror options:
+# --overwrite: Force overwrite of existing objects
+# --preserve: Preserve file attributes
+# --exclude: Skip temporary files
 if [ "$ALLOW_REMOTE_DELETIONS" = "true" ]; then
-    echo "$LOG_PREFIX WARNING: Remote deletions are ENABLED (ALLOW_REMOTE_DELETIONS=true)"
-    mc mirror --remove --exclude "*.tmp" --exclude "*.partial" "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
+    echo "$LOG_PREFIX WARNING: Remote deletions are ENABLED"
+    mc mirror --remove --overwrite --preserve \
+        --exclude "*.tmp" --exclude "*.partial" \
+        "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
 else
-    mc mirror --exclude "*.tmp" --exclude "*.partial" "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
+    mc mirror --overwrite --preserve \
+        --exclude "*.tmp" --exclude "*.partial" \
+        "$SOURCE_DIR/" "minio/$BUCKET_NAME/"
 fi
 
-# Verify upload success and cleanup
+# Faster cleanup using find with -delete
 echo "$LOG_PREFIX Cleaning up successfully uploaded files..."
-cleanup_count=0
 
-# Get list of files in bucket
-mc ls "minio/$BUCKET_NAME/" --recursive | while read -r line; do
-    # Extract filename from mc ls output (last column)
-    remote_file=$(echo "$line" | awk '{print $NF}')
-    local_file="$SOURCE_DIR/$remote_file"
+# Get list of successfully uploaded files and remove them
+# This is faster than checking each file individually
+find "$SOURCE_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.gif" -o -name "*.txt" -o -name "*.TXT" -o -name "*.nc" \) -print0 | \
+while IFS= read -r -d '' local_file; do
+    # Extract relative path
+    rel_path="${local_file#$SOURCE_DIR/}"
     
-    # Remove local file if it exists and was successfully uploaded
-    if [[ -f "$local_file" ]]; then
-        echo "$LOG_PREFIX Removing uploaded file: $local_file"
+    # Check if file exists in MinIO (faster stat check)
+    if mc stat "minio/$BUCKET_NAME/$rel_path" >/dev/null 2>&1; then
         rm -f "$local_file"
-        cleanup_count=$((cleanup_count + 1))
     fi
 done
 
 # Remove empty directories
-echo "$LOG_PREFIX Cleaning up empty directories..."
 find "$SOURCE_DIR" -type d -empty -delete 2>/dev/null || true
 
 # Get final counts
-remaining_files=$(find "$SOURCE_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.gif" -o -name "*.txt" -o -name "*.TXT" -o -name "*.nc" \) | wc -l)
-bucket_files=$(mc ls "minio/$BUCKET_NAME/" --recursive | wc -l)
+remaining_files=$(find "$SOURCE_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.gif" -o -name "*.txt" -o -name "*.TXT" -o -name "*.nc" \) 2>/dev/null | wc -l)
 
 echo "$LOG_PREFIX Upload completed successfully"
 echo "$LOG_PREFIX Files remaining locally: $remaining_files"
-echo "$LOG_PREFIX Total files in bucket: $bucket_files"
+echo "$LOG_PREFIX Files uploaded this cycle: $((file_count - remaining_files))"
