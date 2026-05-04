@@ -1,0 +1,14 @@
+[Unit]
+Description=SatDump GOES-19 HRIT TCP server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/satdump live goes_hrit_tcp GOES_19 --source rtlsdr --samplerate 2.4e6 --frequency 1694.1e6 --agc --bias --fill_missing --http_server 0.0.0.0:8080
+Restart=always
+RestartSec=3
+User=root
+# Optional: setcap to allow rtlsdr without root, or run as root if you prefer
+
+[Install]
+WantedBy=multi-user.target
