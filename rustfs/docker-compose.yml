@@ -1,8 +1,24 @@
 services:
+  # Fixes ownership of the bind-mounted ./data dir so the non-root rustfs user
+  # (UID 10001 inside the container) can write to it. Without this, a fresh
+  # `docker compose up` against a host-created or root-owned ./data dir fails
+  # with "Permission denied (os error 13)".
+  rustfs-init:
+    image: alpine:3.20
+    container_name: rustfs-init
+    user: "0:0"
+    volumes:
+      - ./data:/data
+    command: ["chown", "-R", "10001:10001", "/data"]
+    restart: "no"
+
   rustfs:
     image: rustfs/rustfs:latest
     container_name: rustfs
     restart: always
+    depends_on:
+      rustfs-init:
+        condition: service_completed_successfully
     ports:
       - "9000:9000"
       - "9001:9001"
