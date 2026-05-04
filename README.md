@@ -1,6 +1,6 @@
 # GOES-stack
 
-A modern, containerized solution for processing, storing, and viewing [GOES satellite imagery + data](https://www.ncei.noaa.gov/products/satellite/goes-r) on a long-running basis. Building on [satdump](https://www.satdump.org/), [goesproc](https://pietern.github.io/goestools/commands/goesproc.html), minio, docker compose, and Go.
+A modern, containerized solution for processing, storing, and viewing [GOES satellite imagery + data](https://www.ncei.noaa.gov/products/satellite/goes-r) on a long-running basis. Building on [satdump](https://www.satdump.org/), [goesproc](https://pietern.github.io/goestools/commands/goesproc.html), [RustFS](https://rustfs.com/), docker compose, and Go.
 
 This monorepo contains all components needed to run a complete GOES satellite ground station indefinitely.
 
@@ -29,9 +29,9 @@ While you can run tools like [satdump](https://www.satdump.org/) alone on a lapt
 ## Architecture Overview
 
 ```
-Raspberry Pi (Yard) → Processing Server → MinIO Storage → Web Frontend
-    ↓                      ↓                 ↓              ↓
-  satdump/goesrecv    →  goesproc-docker  →  goes-api-go  →  goes-viewer
+Raspberry Pi (Yard) → Processing Server → RustFS Storage → Web Frontend
+    ↓                      ↓                  ↓               ↓
+  satdump/goesrecv    →  goesproc-docker  →  goes-api-go   →  goes-viewer
 ```
 
 ### Recommended hardware
@@ -43,7 +43,7 @@ Raspberry Pi (Yard) → Processing Server → MinIO Storage → Web Frontend
 - [Renogy Rover 20A MPPT Solar Charger](https://www.renogy.com/products/rover-li-20-amp-mppt-solar-charge-controller)
 - 2x100 watt solar panels of your choice, plus appropriate mounting hardware
 - Suitable 12v LifePO4 battery (at least 20Ah, would suggest getting two for extra runtime during cloudy days)
-- A modern desktop/server inside (connected to the same network as the pi, via wifi or ethernet) with at least a 1TB SSD for the MinIO bucket — `goes-stack` is designed to run indefinitely and the archive grows continuously (full-disk imagery alone is ~100MB/day per channel, and EMWIN piles on text + maps on top of that). 1TB will give you many months of headroom; plan a retention/cleanup policy before it fills up.
+- A modern desktop/server inside (connected to the same network as the pi, via wifi or ethernet) with at least a 1TB SSD for the RustFS bucket — `goes-stack` is designed to run indefinitely and the archive grows continuously (full-disk imagery alone is ~100MB/day per channel, and EMWIN piles on text + maps on top of that). 1TB will give you many months of headroom; plan a retention/cleanup policy before it fills up.
 - Internet connection (you can expose the frontend with something like Cloudflare tunnel).
 - You'll need all the appropriate wires, connectors etc for building the 12V electrical system out too. Not going to go into all those details here, but high level recommendations:
   - [Good buck converters](https://www.amazon.com/dp/B07XXWQ49N)
@@ -77,22 +77,22 @@ To keep satdump running on the Pi across reboots, drop in the systemd unit at [`
 
 ## Components
 
-### minio
-S3-compatible file storage for the processed satellite data. See [minio/](minio/).
+### rustfs
+S3-compatible file storage for the processed satellite data, powered by [RustFS](https://rustfs.com/) (a high-performance Rust-based MinIO alternative). See [rustfs/](rustfs/).
 
 ### 🐳 goesproc-docker
-Containerized goesproc setup that processes the raw GOES TCP stream from the Pi into images and weather products, then uploads to MinIO. See [goesproc-docker/](goesproc-docker/).
+Containerized goesproc setup that processes the raw GOES TCP stream from the Pi into images and weather products, then uploads to RustFS. See [goesproc-docker/](goesproc-docker/).
 
 **Features:**
 - Processes raw GOES data from satdump/goesrecv TCP streams
-- Automatic image upload to MinIO every 15 minutes via sidecar container
+- Automatic image upload to RustFS every 15 minutes via sidecar container
 - Local cleanup of successfully uploaded files
 - Comprehensive logging and error handling
 - Environment-based configuration
 - Watchdog sidecar container to automatically restart goesproc whenever the Raspberry Pi restarts
 
 ### 🔧 goes-api-go
-Lightweight Go API server that provides RESTful endpoints for accessing satellite images stored in MinIO/S3-compatible storage. See [goes-api-go/](goes-api-go/).
+Lightweight Go API server that provides RESTful endpoints for accessing satellite images stored in any S3-compatible storage (RustFS, MinIO, AWS S3, etc.). See [goes-api-go/](goes-api-go/).
 
 **Endpoints:**
 - `/latest` - Get the most recent satellite image
@@ -118,28 +118,26 @@ Modern Next.js 15 frontend for viewing GOES satellite imagery with a clean, resp
 
 ## Quick Start
 
-### 1. Set up MinIO Storage
+### 1. Set up RustFS Storage
 
 ```bash
-cd minio
+cd rustfs
 docker-compose up -d
 ```
 
-This creates an S3-compatible storage backend at `http://localhost:9000`. Visit the MinIO console at `http://localhost:9001`, create a bucket named `goes-data`, and generate an access key pair for the next steps.
+This creates an S3-compatible storage backend at `http://localhost:9000`. Visit the RustFS console at `http://localhost:9001`, create a bucket named `goes-data`, and generate an access key pair for the next steps.
 
 ### 2. Start goesproc Processing with Auto-Upload
 
-Create `goesproc-docker/docker-compose.override.yml` with your MinIO endpoint and credentials:
+Create `goesproc-docker/docker-compose.override.yml` with your S3 endpoint and credentials:
 
 ```yaml
-version: '3.8'
-
 services:
   uploader:
     environment:
-      - MINIO_ENDPOINT=minio.local:9000
-      - MINIO_ACCESS_KEY=example
-      - MINIO_SECRET_KEY=example-secret
+      - S3_ENDPOINT=rustfs.local:9000
+      - S3_ACCESS_KEY=example
+      - S3_SECRET_KEY=example-secret
       - BUCKET_NAME=goes-data
       - UPLOAD_INTERVAL=900            # 15 minutes in seconds
 ```
@@ -151,14 +149,14 @@ cd goesproc-docker
 docker-compose up -d
 ```
 
-The uploader sidecar will automatically upload processed images to MinIO every 15 minutes, clean up local files after successful upload, and log to `./logs/upload.log`.
+The uploader sidecar will automatically upload processed images to RustFS every 15 minutes, clean up local files after successful upload, and log to `./logs/upload.log`.
 
 ### 3. Start the API Server
 
 ```bash
 cd goes-api-go
 cp docker-compose.example.yml docker-compose.override.yml
-# Edit docker-compose.override.yml with your MinIO credentials
+# Edit docker-compose.override.yml with your S3 credentials
 docker-compose up -d
 ```
 
@@ -179,8 +177,8 @@ Visit `http://localhost:3000` to view your satellite imagery (or `http://localho
 **goes-api-go:**
 ```bash
 S3_ENDPOINT=localhost:9000
-ACCESS_KEY_ID=minioadmin
-SECRET_ACCESS_KEY=minioadmin
+ACCESS_KEY_ID=rustfsadmin
+SECRET_ACCESS_KEY=rustfsadmin
 BUCKET_NAME=goes-data
 USE_SSL_FOR_S3=false
 PORT=3000
@@ -188,9 +186,10 @@ PORT=3000
 
 **goesproc-docker:**
 ```bash
-MINIO_ENDPOINT=localhost:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
+S3_ENDPOINT=localhost:9000
+S3_ACCESS_KEY=rustfsadmin
+S3_SECRET_KEY=rustfsadmin
+S3_USE_SSL=false
 BUCKET_NAME=goes-data
 UPLOAD_INTERVAL=900  # 15 minutes
 ```
@@ -235,9 +234,9 @@ cd goesproc-docker && docker-compose up -d
 ## Troubleshooting
 
 ### Upload Issues
-- Check MinIO connectivity: `docker-compose exec uploader mc ls minio/`
+- Check S3 connectivity: `docker-compose exec uploader aws --endpoint-url http://$S3_ENDPOINT s3 ls`
 - View upload logs: `docker-compose logs -f uploader`
-- Verify bucket permissions in MinIO console
+- Verify bucket permissions in the RustFS console
 
 ### Processing Issues
 - Check TCP connection to Raspberry Pi

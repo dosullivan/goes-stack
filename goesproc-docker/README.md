@@ -1,6 +1,6 @@
 # goesproc-docker
 
-Containerized [goesproc](https://pietern.github.io/goestools/commands/goesproc.html) setup that turns the demodulated TCP stream from satdump (running on the Pi in the yard) into images and weather products on disk, then ships them to MinIO.
+Containerized [goesproc](https://pietern.github.io/goestools/commands/goesproc.html) setup that turns the demodulated TCP stream from satdump (running on the Pi in the yard) into images and weather products on disk, then ships them to RustFS (or any S3-compatible backend).
 
 ## Services
 
@@ -15,19 +15,19 @@ A tiny Alpine sidecar that watches the Pi's TCP port and restarts the `goesproc`
 The watchdog logic lives in [`scripts/watch.sh`](scripts/watch.sh) and is mounted read-only into the container. Tunable knobs (`CHECK_INTERVAL`, `UP_STREAK`, `DOWN_STREAK`, `COOLDOWN_SEC`) are set via env vars in `docker-compose.yml`.
 
 ### `uploader`
-Built from [`Dockerfile.uploader`](Dockerfile.uploader) — an Alpine container with the MinIO `mc` client. Every `UPLOAD_INTERVAL` seconds (15 minutes by default) it runs [`scripts/upload.sh`](scripts/upload.sh), which:
+Built from [`Dockerfile.uploader`](Dockerfile.uploader) — an Alpine container with the AWS CLI. Every `UPLOAD_INTERVAL` seconds (15 minutes by default) it runs [`scripts/upload.sh`](scripts/upload.sh), which:
 
 1. Calls [`scripts/preprocess_emwin.sh`](scripts/preprocess_emwin.sh) to fix EMWIN files that goesproc landed in the `1969-12-31` folder (a known goesproc quirk where files arrive without a usable timestamp header — we re-derive the date from the filename and move them into the correct `YYYY-MM-DD` directory before upload).
-2. Runs `mc mirror` to push everything in `./data/` into the configured MinIO bucket.
-3. Removes local files that successfully made it to MinIO (verified with `mc stat`), so the local disk doesn't fill up indefinitely.
+2. Runs `aws s3 sync` to push everything in `./data/` into the configured bucket.
+3. Removes local files that successfully made it remote (verified with `aws s3api head-object`), so the local disk doesn't fill up indefinitely.
 
-By default `mc mirror` runs without `--remove`, so files deleted in MinIO won't be deleted locally on the next sync. Set `ALLOW_REMOTE_DELETIONS=true` in your override if you want bidirectional sync.
+By default `aws s3 sync` runs without `--delete`, so files deleted remotely won't be deleted locally on the next sync. Set `ALLOW_REMOTE_DELETIONS=true` in your override if you want bidirectional sync.
 
 Logs from each upload cycle are appended to `./logs/upload.log`.
 
 ## Configuration
 
-Everything user-specific (Pi IP, MinIO endpoint, credentials, bucket name, upload interval) lives in [`docker-compose.override.yml`](docker-compose.override.yml), which is gitignored. The base `docker-compose.yml` ships with `pi.local` placeholders for the Pi's address — your override should replace them with the real IP.
+Everything user-specific (Pi IP, S3 endpoint, credentials, bucket name, upload interval) lives in [`docker-compose.override.yml`](docker-compose.override.yml), which is gitignored. The base `docker-compose.yml` ships with `pi.local` placeholders for the Pi's address — your override should replace them with the real IP.
 
 Example override (see the top-level [README](../README.md#2-start-goesproc-processing-with-auto-upload) for the full template):
 
@@ -42,9 +42,9 @@ services:
 
   uploader:
     environment:
-      - MINIO_ENDPOINT=minio.local:9000
-      - MINIO_ACCESS_KEY=...
-      - MINIO_SECRET_KEY=...
+      - S3_ENDPOINT=rustfs.local:9000
+      - S3_ACCESS_KEY=...
+      - S3_SECRET_KEY=...
       - BUCKET_NAME=goes-data
       - UPLOAD_INTERVAL=900
 ```

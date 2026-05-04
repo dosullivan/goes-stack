@@ -1,7 +1,7 @@
 # goes-api-go
 
 ## Description
-A lightweight and fast API for retrieving [GOES satellite data](https://www.goes-r.gov/) stored in an S3 bucket, written in Go. This service is designed to be used in conjunction with goes-web, a lightweight web frontend for viewing GOES satellite data. The service is meant to run in a local network alongside a locally-hosted minio s3 bucket. The images are notably provided through a `/proxy/image` endpoint, which streams the image from the minio bucket through the api. With this setup, the frontend application goes-viewer, also running locally, can be served through a cloudflare tunnel or tailscale funnel on the internet, and the end user can pull the image through.
+A lightweight and fast API for retrieving [GOES satellite data](https://www.goes-r.gov/) stored in an S3 bucket, written in Go. This service is designed to be used in conjunction with goes-web, a lightweight web frontend for viewing GOES satellite data. The service is meant to run in a local network alongside a locally-hosted S3-compatible bucket (e.g. RustFS or MinIO). The images are notably provided through a `/proxy/image` endpoint, which streams the image from the bucket through the api. With this setup, the frontend application goes-viewer, also running locally, can be served through a cloudflare tunnel or tailscale funnel on the internet, and the end user can pull the image through.
 
 ## Motivation
 Basically just wanted to have an easier API to use than the S3 API with a frontend react app, while also making the proxying mentioned above possible, to minimize the surface area exposed to the internet.
@@ -11,7 +11,7 @@ This service assumes that you have an S3 bucket that is filled with GOES satelli
 
 You can find an [example script](./examples/upload.sh) for syncing the data from the data folder used by `goesproc` to an S3 bucket.
 
-This project was developed against minio and digital ocean spaces, but should work with any S3-compatible storage.
+This project was developed against RustFS, MinIO, and DigitalOcean Spaces, but should work with any S3-compatible storage.
 
 ## Configuration
 The following environment variables are required:
@@ -19,7 +19,7 @@ The following environment variables are required:
 - `SECRET_ACCESS_KEY` - The secret access key for the S3 bucket.
 - `S3_ENDPOINT` - The endpoint for the S3 API.
 - `BUCKET_NAME` - The name of the S3 bucket.
-- `USE_SSL_FOR_S3` - Whether to use SSL for S3. Set to `false` to use with simple local minio setups.
+- `USE_SSL_FOR_S3` - Whether to use SSL for S3. Set to `false` for plain HTTP local setups (e.g. RustFS/MinIO without TLS).
 - `TRUSTED_PROXIES`- A comma-separated list of trusted proxies, in case you want to set them. This isn't used for anything yet.
 
 ## API Usage
@@ -80,7 +80,7 @@ curl "http://localhost:3000/emwin/text/content?key=emwin/2024-08-23/ABC_DEF_2024
 # => { "objectKey": "emwin/2024-08-23/...TXT", "content": "...file contents..." }
 ```
 
-- `/proxy/image` — Proxies an image from the MinIO/S3 base URL through this API. Requires `url` query.
+- `/proxy/image` — Proxies an image from the configured S3 base URL through this API. Requires `url` query.
 ```shell
 curl "http://localhost:3000/proxy/image?url=http://localhost:9000/bucket/path/to/image.png" --output image.png
 # Streams the image through the API and saves it locally

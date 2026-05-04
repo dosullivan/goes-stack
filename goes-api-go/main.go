@@ -71,7 +71,7 @@ func main() {
 			return
 		}
 
-		// Validate URL is from our Minio instance
+		// Validate URL is from our configured S3 endpoint
 		if !strings.HasPrefix(imageUrl, s3Client.BaseURL) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid image source"})
 			return

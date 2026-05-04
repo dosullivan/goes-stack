@@ -1,12 +1,8 @@
 FROM alpine:latest
 
-# Install required packages and MinIO client in a single layer
-RUN apk add --no-cache curl findutils bash && \
-    curl -L https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc && \
-    chmod +x /usr/local/bin/mc
+# Install required packages and AWS CLI v2 for S3-compatible uploads
+RUN apk add --no-cache curl findutils bash aws-cli
 
-# Set working directory
 WORKDIR /app
 
-# Default command (will be overridden in docker-compose)
 CMD ["sh"]

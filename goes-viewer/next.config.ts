@@ -5,7 +5,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'http',
-        hostname: 'minio.int.ridge.casa',
+        hostname: 'rustfs.int.ridge.casa',
         port: '9000',
         pathname: '/**',
       },
