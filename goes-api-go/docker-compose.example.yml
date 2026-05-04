@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
   goes-api:
     environment:
       # Single bucket for all satellite data
       - BUCKET_NAME=goes-data
-      
+
       # S3-compatible connection settings (RustFS, MinIO, AWS S3, etc.)
       - S3_ENDPOINT=your-s3-host:9000
       - ACCESS_KEY_ID=your-access-key
       - SECRET_ACCESS_KEY=your-secret-key
       - USE_SSL_FOR_S3=false
-      
+
       # Server settings
       - PORT=3000
