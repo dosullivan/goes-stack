@@ -41,9 +41,11 @@ if [[ -f "$PREPROCESS_SCRIPT" ]] && [[ -x "$PREPROCESS_SCRIPT" ]]; then
     "$PREPROCESS_SCRIPT" || echo "$LOG_PREFIX WARNING: EMWIN preprocessing failed"
 fi
 
-# Verify connection
-if ! aws_s3 ls > /dev/null 2>&1; then
-    echo "$LOG_PREFIX ERROR: Cannot connect to S3 endpoint at $ENDPOINT_URL"
+# Verify endpoint is reachable and credentials work
+if ! err=$(aws_s3 ls 2>&1 >/dev/null); then
+    echo "$LOG_PREFIX ERROR: aws s3 ls failed against $ENDPOINT_URL"
+    echo "$LOG_PREFIX   This usually means bad credentials or an unreachable endpoint."
+    echo "$LOG_PREFIX   AWS CLI says: $err"
     exit 1
 fi
 
